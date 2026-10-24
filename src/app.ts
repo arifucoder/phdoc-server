@@ -4,6 +4,9 @@ import express from "express";
 
 const app = express();
 
+// Enable URL-encoded form data parsing
+app.use(express.urlencoded({ extended: true }));
+
 app.use(express.json()); // request body থেকে JSON পড়ার জন্য
 app.use(cors());
 
