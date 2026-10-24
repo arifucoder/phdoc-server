@@ -1,6 +1,7 @@
 import cors from "cors";
 import type { Request, Response } from "express";
 import express from "express";
+import { prisma } from "./app/lib/prisma";
 
 const app = express();
 
@@ -14,6 +15,13 @@ app.get("/", (req: Request, res: Response) => {
 	res.json({
 		message: "Welcome to phdoc!",
 	});
+});
+
+app.post("/specialty", async (req: Request, res: Response) => {
+	const specialty = await prisma.specialty.create({
+		data: { title: "Neurology" },
+	});
+	res.status(201).json({ message: "specialty created", data: specialty });
 });
 
 export default app;

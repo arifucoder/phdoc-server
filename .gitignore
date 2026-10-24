@@ -21,7 +21,6 @@ jspm_packages/
 dist/
 build/
 out/
-lib/
 *.tsbuildinfo
 .tsbuildinfo
 
@@ -181,3 +180,4 @@ node_modules/.modules.yaml
 
 # Local .npmrc-এ token/secret থাকলে
 .npmrc.local
+/src/generated/prisma
