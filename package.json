@@ -7,7 +7,8 @@
 		"lint": "oxlint",
 		"lint:fix": "oxlint --fix",
 		"dev": "tsx watch src/server.ts",
-		"build": "tsdown",
+		"check": "pnpm typecheck && pnpm lint",
+		"build": "pnpm check && tsdown",
 		"start": "node dist/server.js",
 		"typecheck": "tsc --noEmit"
 	},
