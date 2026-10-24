@@ -1,0 +1,168 @@
+# ===========================
+# Dependencies
+# ===========================
+node_modules/
+.pnp
+.pnp.js
+.pnp.cjs
+.pnp.loader.mjs
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+bower_components/
+jspm_packages/
+
+# ===========================
+# Build output (TypeScript)
+# ===========================
+dist/
+build/
+out/
+lib/
+*.tsbuildinfo
+.tsbuildinfo
+
+# ===========================
+# Environment variables / Secrets
+# (DATABASE_URL, BETTER_AUTH_SECRET, OAuth keys ইত্যাদি)
+# ===========================
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+*.crt
+secrets/
+
+# ===========================
+# Prisma
+# ===========================
+# Custom output দিলে generated client ignore করুন
+# (schema.prisma তে: output = "../src/generated/prisma")
+src/generated/
+generated/
+prisma/*.db
+prisma/*.db-journal
+prisma/dev.db*
+# NOTE: prisma/migrations/ ফোল্ডার অবশ্যই commit করবেন — ignore করবেন না
+
+# ===========================
+# Database dumps / local data
+# ===========================
+*.sql.gz
+*.dump
+*.backup
+pgdata/
+postgres-data/
+docker-data/
+
+# ===========================
+# Logs
+# ===========================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# ===========================
+# Testing / Coverage
+# ===========================
+coverage/
+.nyc_output/
+*.lcov
+junit.xml
+test-results/
+playwright-report/
+playwright/.cache/
+
+# ===========================
+# Cache
+# ===========================
+.cache/
+.npm/
+.eslintcache
+.stylelintcache
+.prettiercache
+.turbo/
+.swc/
+.parcel-cache/
+.rollup.cache/
+.vite/
+.temp/
+.tmp/
+tmp/
+temp/
+
+# ===========================
+# File uploads (local storage)
+# ===========================
+uploads/
+public/uploads/
+storage/
+
+# ===========================
+# Runtime / Process managers
+# ===========================
+pids/
+*.pid
+*.seed
+*.pid.lock
+.pm2/
+ecosystem.config.local.js
+
+# ===========================
+# Docker (local overrides)
+# ===========================
+docker-compose.override.yml
+.docker/
+
+# ===========================
+# Serverless / Deploy
+# ===========================
+.vercel/
+.netlify/
+.serverless/
+.railway/
+.fly/
+
+# ===========================
+# IDE / Editor
+# ===========================
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+*.sublime-project
+
+# ===========================
+# OS files
+# ===========================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ===========================
+# Misc
+# ===========================
+*.tgz
+.history/
