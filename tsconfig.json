@@ -9,7 +9,6 @@
 		"noEmit": true,
 
 		// Path alias (optional, কিন্তু খুব কাজের)
-		"baseUrl": ".",
 		"paths": {
 			"@/*": ["./src/*"]
 		},
