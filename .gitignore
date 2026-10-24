@@ -166,3 +166,18 @@ Desktop.ini
 # ===========================
 *.tgz
 .history/
+.vscode
+.vscode/
+
+
+# ===========================
+# pnpm
+# ===========================
+.pnpm-store/
+.pnpm-debug.log*
+.pnpm-state.json
+node_modules/.pnpm/
+node_modules/.modules.yaml
+
+# Local .npmrc-এ token/secret থাকলে
+.npmrc.local

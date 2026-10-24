@@ -1,0 +1,29 @@
+{
+	"name": "phdoc-server",
+	"version": "1.0.0",
+	"description": "",
+	"main": "dist/server.js",
+	"scripts": {
+		"dev": "tsx watch src/server.ts",
+		"build": "tsdown",
+		"start": "node dist/server.js",
+		"typecheck": "tsc --noEmit"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"devEngines": {
+		"packageManager": {
+			"name": "pnpm",
+			"version": "^11.20.0",
+			"onFail": "download"
+		}
+	},
+	"type": "module",
+	"devDependencies": {
+		"@types/node": "^26.6.5",
+		"tsdown": "^0.23.1",
+		"tsx": "^4.23.15",
+		"typescript": "^7.0.2"
+	}
+}
