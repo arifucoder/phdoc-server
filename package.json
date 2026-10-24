@@ -4,6 +4,8 @@
 	"description": "",
 	"main": "dist/server.js",
 	"scripts": {
+		"lint": "oxlint",
+		"lint:fix": "oxlint --fix",
 		"dev": "tsx watch src/server.ts",
 		"build": "tsdown",
 		"start": "node dist/server.js",
@@ -22,6 +24,8 @@
 	"type": "module",
 	"devDependencies": {
 		"@types/node": "^26.6.5",
+		"oxlint": "^1.89.0",
+		"oxlint-tsgolint": "^7.0.2005",
 		"tsdown": "^0.23.1",
 		"tsx": "^4.23.15",
 		"typescript": "^7.0.2"
