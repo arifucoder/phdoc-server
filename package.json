@@ -10,7 +10,10 @@
 		"check": "pnpm typecheck && pnpm lint",
 		"build": "pnpm check && tsdown",
 		"start": "node dist/server.js",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit",
+		"migrate": "prisma migrate dev",
+		"generate": "prisma generate",
+		"studio": "prisma studio"
 	},
 	"keywords": [],
 	"author": "",
