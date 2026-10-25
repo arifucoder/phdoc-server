@@ -1,14 +1,17 @@
-import { prisma } from "@/app/lib/prisma";
-import type { Specialty } from "@/generated/prisma/client";
+import type { Request, Response } from "express";
+import { SpecialtyService } from "./specialty.service";
 
-const createSpecialty = async (payload: Specialty): Promise<Specialty> => {
-	const specialty = await prisma.specialty.create({
-		data: payload,
+const createSpecialty = async (req: Request, res: Response) => {
+	const payload = req.body;
+	const result = await SpecialtyService.createSpecialty(payload);
+
+	res.status(201).json({
+		success: true,
+		message: "Specialty created successfully",
+		data: result,
 	});
-
-	return specialty;
 };
 
-export const SpecialtyService = {
+export const SpecialtyController = {
 	createSpecialty,
 };
