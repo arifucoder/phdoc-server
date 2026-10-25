@@ -12,6 +12,12 @@ const createSpecialty = async (req: Request, res: Response) => {
 	});
 };
 
+const getAllSpecialties = () => {};
+
+const deleteSpecialty = () => {};
+
 export const SpecialtyController = {
 	createSpecialty,
+	getAllSpecialties,
+	deleteSpecialty,
 };
