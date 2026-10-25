@@ -1,7 +1,7 @@
 import cors from "cors";
 import type { Request, Response } from "express";
 import express from "express";
-import { SpecialtyRoutes } from "./app/module/specialty/specialty.route";
+import { IndexRoutes } from "./app/routes";
 
 const app = express();
 
@@ -17,6 +17,6 @@ app.get("/", (req: Request, res: Response) => {
 	});
 });
 
-app.use("/api/v1/specialties", SpecialtyRoutes);
+app.use("/api/v1", IndexRoutes);
 
 export default app;
