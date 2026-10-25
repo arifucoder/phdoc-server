@@ -1,7 +1,7 @@
 import cors from "cors";
 import type { Request, Response } from "express";
 import express from "express";
-import { prisma } from "./app/lib/prisma";
+import { SpecialtyRoutes } from "./app/module/specialty/specialty.route";
 
 const app = express();
 
@@ -17,11 +17,6 @@ app.get("/", (req: Request, res: Response) => {
 	});
 });
 
-app.post("/specialty", async (req: Request, res: Response) => {
-	const specialty = await prisma.specialty.create({
-		data: { title: "Neurology" },
-	});
-	res.status(201).json({ message: "specialty created", data: specialty });
-});
+app.use("/api/v1/specialties", SpecialtyRoutes);
 
 export default app;
