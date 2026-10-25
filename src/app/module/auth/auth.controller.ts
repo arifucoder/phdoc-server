@@ -1,6 +1,6 @@
+import { catchAsync } from "@/app/shared/catchAsync";
+import { sendResponse } from "@/app/shared/sendResponse";
 import type { Request, Response } from "express";
-import { catchAsync } from "../../shared/catchAsync";
-import { sendResponse } from "../../shared/sendResponse";
 import { AuthService } from "./auth.service";
 
 const registerPatient = catchAsync(async (req: Request, res: Response) => {

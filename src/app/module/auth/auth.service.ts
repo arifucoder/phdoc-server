@@ -1,5 +1,5 @@
-import { UserStatus } from "../../../generated/prisma/enums";
-import { auth } from "../../lib/auth";
+import { auth } from "@/app/lib/auth";
+import { UserStatus } from "@/generated/prisma/enums";
 
 interface IRegisterPatientPayload {
 	name: string;
