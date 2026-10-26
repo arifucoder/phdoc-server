@@ -1,14 +1,24 @@
 import { Role, UserStatus } from "@/generated/prisma/enums";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { envVars } from "../config/env";
 import { prisma } from "./prisma";
 
 export const auth = betterAuth({
 	database: prismaAdapter(prisma, {
 		provider: "postgresql", // or "mysql", "sqlite", ...etc
 	}),
+
 	emailAndPassword: {
 		enabled: true,
+	},
+	session: {
+		expiresIn: Number(envVars.BETTER_AUTH_SESSION_TOKEN_EXPIRES_IN),
+		updateAge: Number(envVars.BETTER_AUTH_SESSION_TOKEN_UPDATE_AGE),
+		cookieCache: {
+			enabled: true,
+			maxAge: 60 * 5, // 5 minutes (seconds) = 300
+		},
 	},
 	user: {
 		additionalFields: {

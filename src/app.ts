@@ -1,6 +1,8 @@
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import type { Request, Response } from "express";
 import express from "express";
+import { envVars } from "./app/config/env";
 import { globalErrorHandler } from "./app/middleware/globalErrorHandler";
 import { notFound } from "./app/middleware/notFound";
 import { IndexRoutes } from "./app/routes";
@@ -9,9 +11,15 @@ const app = express();
 
 // Enable URL-encoded form data parsing
 app.use(express.urlencoded({ extended: true }));
-
+app.use(cookieParser());
 app.use(express.json()); // request body থেকে JSON পড়ার জন্য
-app.use(cors());
+app.use(
+	cors({
+		origin: envVars.FRONTEND_URL, // যেমন http://localhost:3000
+		credentials: true, // cookie আসা-যাওয়ার অনুমতি
+		exposedHeaders: ["X-Session-Refresh", "X-Session-Expires-At", "X-Time-Remaining"],
+	}),
+);
 
 app.get("/", (req: Request, res: Response) => {
 	res.json({
