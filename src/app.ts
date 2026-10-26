@@ -1,6 +1,8 @@
 import cors from "cors";
 import type { Request, Response } from "express";
 import express from "express";
+import { globalErrorHandler } from "./app/middleware/globalErrorHandler";
+import { notFound } from "./app/middleware/notFound";
 import { IndexRoutes } from "./app/routes";
 
 const app = express();
@@ -19,4 +21,6 @@ app.get("/", (req: Request, res: Response) => {
 
 app.use("/api/v1", IndexRoutes);
 
+app.use(notFound);
+app.use(globalErrorHandler);
 export default app;
