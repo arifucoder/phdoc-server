@@ -1,8 +1,9 @@
+import AppError from "@/app/errorHelpers/AppError";
 import { auth } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 import { Role, type Specialty } from "@/generated/prisma/client";
-import type { ICreateDoctorPayload } from "./user.interface";
-
+import httpStatus from "http-status";
+import type { ICreateAdminPayload, ICreateDoctorPayload } from "./user.interface";
 const createDoctor = async (payload: ICreateDoctorPayload) => {
 	const specialties: Specialty[] = [];
 
@@ -124,6 +125,56 @@ const createDoctor = async (payload: ICreateDoctorPayload) => {
 	}
 };
 
+const createAdmin = async (payload: ICreateAdminPayload) => {
+	const { admin, password } = payload;
+
+	const userExists = await prisma.user.findUnique({
+		where: { email: admin.email },
+	});
+
+	if (userExists) {
+		throw new AppError(httpStatus.CONFLICT, "User with this email already exists");
+	}
+
+	// Better Auth-এর User table-এ শুধু তার নিজের field-গুলো পাঠানো হচ্ছে
+	const userData = await auth.api.signUpEmail({
+		body: {
+			name: admin.name,
+			email: admin.email,
+			password,
+			image: admin.profilePhoto,
+			role: Role.ADMIN, // client থেকে না, সবসময় hardcode
+			needPasswordChange: true,
+		},
+	});
+
+	try {
+		const adminData = await prisma.admin.create({
+			data: {
+				userId: userData.user.id,
+				name: admin.name,
+				email: admin.email,
+				profilePhoto: admin.profilePhoto,
+				contactNumber: admin.contactNumber,
+			},
+		});
+
+		// signUpEmail auto sign-in করে session বানায়, নতুন admin-এর এটা লাগবে না
+		await prisma.session.deleteMany({
+			where: { userId: userData.user.id },
+		});
+
+		return adminData;
+	} catch (error) {
+		console.error("Error creating admin:", error);
+		await prisma.user.delete({
+			where: { id: userData.user.id },
+		});
+		throw error;
+	}
+};
+
 export const UserService = {
 	createDoctor,
+	createAdmin,
 };
