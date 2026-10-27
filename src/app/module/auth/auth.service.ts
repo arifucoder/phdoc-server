@@ -1,20 +1,11 @@
 import AppError from "@/app/errorHelpers/AppError";
+import type { IRequestUser } from "@/app/interfaces/requestUser.interface";
 import { auth } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 import { tokenUtils } from "@/app/utils/token";
 import { UserStatus } from "@/generated/prisma/enums";
 import httpStatus from "http-status";
-
-interface IRegisterPatientPayload {
-	name: string;
-	email: string;
-	password: string;
-}
-
-interface ILoginUserPayload {
-	email: string;
-	password: string;
-}
+import type { ILoginUserPayload, IRegisterPatientPayload } from "./auth.interface";
 
 // Better Auth-এর user থেকে access + refresh token বানানো
 type TAuthUser = Awaited<ReturnType<typeof auth.api.signInEmail>>["user"];
@@ -100,7 +91,48 @@ const loginUser = async (payload: ILoginUserPayload) => {
 	};
 };
 
+const getMe = async (user: IRequestUser) => {
+	const isUserExists = await prisma.user.findUnique({
+		where: {
+			id: user.userId,
+		},
+		include: {
+			patient: {
+				include: {
+					appointments: {
+						take: 5,
+						orderBy: { createdAt: "desc" },
+					},
+					reviews: true,
+					prescriptions: true,
+					medicalReports: true,
+					patientHealthData: true,
+				},
+			},
+			doctor: {
+				include: {
+					specialties: true,
+					appointments: {
+						take: 5,
+						orderBy: { createdAt: "desc" },
+					},
+					reviews: true,
+					prescriptions: true,
+				},
+			},
+			admin: true,
+		},
+	});
+
+	if (!isUserExists) {
+		throw new AppError(httpStatus.NOT_FOUND, "User not found");
+	}
+
+	return isUserExists;
+};
+
 export const AuthService = {
 	registerPatient,
 	loginUser,
+	getMe,
 };

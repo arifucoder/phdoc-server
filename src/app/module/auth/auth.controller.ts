@@ -1,3 +1,4 @@
+import AppError from "@/app/errorHelpers/AppError";
 import { catchAsync } from "@/app/shared/catchAsync";
 import { sendResponse } from "@/app/shared/sendResponse";
 import { tokenUtils } from "@/app/utils/token";
@@ -57,7 +58,23 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
+const getMe = catchAsync(async (req: Request, res: Response) => {
+	const user = req.user;
+	if (!req.user) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized access! Please log in.");
+	}
+	console.log({ user });
+	const result = await AuthService.getMe(user);
+	sendResponse(res, {
+		httpStatusCode: httpStatus.OK,
+		success: true,
+		message: "User profile fetched successfully",
+		data: result,
+	});
+});
+
 export const AuthController = {
 	registerPatient,
 	loginUser,
+	getMe,
 };
