@@ -19,7 +19,7 @@ export interface ICreateDoctorPayload {
 	specialties: string[];
 }
 
-export interface ICreateAdmin {
+export interface ICreateAdminPayload {
 	password: string;
 	admin: {
 		name: string;
