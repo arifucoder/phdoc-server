@@ -18,7 +18,9 @@ model Appointment {
   // prescription Prescription?
   // review       Review?
   // payment      Payment?
-  review Review?
+  review       Review?
+  prescription Prescription?
+  payment      Payment?
 
   @@unique([doctorId, scheduleId])
   @@index([patientId], name: "idx_appointment_patientId")
