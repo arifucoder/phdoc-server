@@ -8,6 +8,7 @@ model Schedule {
   updatedAt       DateTime          @updatedAt
   doctorSchedules DoctorSchedules[]
   // appointments  Appointment[]   // Appointment model বানানোর পর uncomment করবে
+  appointments    Appointment[]
 
   @@map("schedules")
 }
