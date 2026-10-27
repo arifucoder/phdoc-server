@@ -60,7 +60,7 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
 
 const getMe = catchAsync(async (req: Request, res: Response) => {
 	const user = req.user;
-	if (!req.user) {
+	if (!user) {
 		throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized access! Please log in.");
 	}
 	console.log({ user });
