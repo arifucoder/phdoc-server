@@ -1,10 +1,13 @@
+import { envVars } from "@/app/config/env";
 import AppError from "@/app/errorHelpers/AppError";
 import type { IRequestUser } from "@/app/interfaces/requestUser.interface";
 import { auth } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
+import { jwtUtils } from "@/app/utils/jwt";
 import { tokenUtils } from "@/app/utils/token";
 import { UserStatus } from "@/generated/prisma/enums";
 import httpStatus from "http-status";
+import type { JwtPayload } from "jsonwebtoken";
 import type { ILoginUserPayload, IRegisterPatientPayload } from "./auth.interface";
 
 // Better Auth-এর user থেকে access + refresh token বানানো
@@ -131,8 +134,70 @@ const getMe = async (user: IRequestUser) => {
 	return isUserExists;
 };
 
+const getNewToken = async (refreshToken: string, sessionToken: string) => {
+	// ধাপ ১: refresh token verify (ভুল/expired হলে jwtUtils নিজেই AppError throw করে)
+	const decoded = jwtUtils.verifyToken(refreshToken, envVars.REFRESH_TOKEN_SECRET);
+
+	// ধাপ ২: DB-তে session খোঁজা
+	const session = await prisma.session.findUnique({
+		where: { token: sessionToken },
+		include: { user: true },
+	});
+
+	if (!session || session.expiresAt <= new Date()) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Session expired or invalid, please login again");
+	}
+
+	// ধাপ ৩: refresh token আর session একই user-এর কিনা
+	if (decoded.userId !== session.userId) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Invalid refresh token");
+	}
+
+	// ধাপ ৪: user-এর বর্তমান অবস্থা DB থেকে check
+	const { user } = session;
+
+	if (user.isDeleted || user.status === UserStatus.DELETED) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "User has been deleted");
+	}
+
+	if (user.status === UserStatus.BLOCKED) {
+		throw new AppError(httpStatus.FORBIDDEN, "User is blocked");
+	}
+
+	// ধাপ ৫: fresh data দিয়ে নতুন token
+	const jwtPayload: JwtPayload = {
+		userId: user.id,
+		role: user.role,
+		name: user.name,
+		email: user.email,
+		status: user.status,
+		isDeleted: user.isDeleted,
+		emailVerified: user.emailVerified,
+	};
+
+	const newAccessToken = tokenUtils.getAccessToken(jwtPayload);
+	const newRefreshToken = tokenUtils.getRefreshToken(jwtPayload);
+
+	// ধাপ ৬: session-এর মেয়াদ বাড়ানো (.env-এ seconds → ms)
+	const sessionExpiresInMs = Number(envVars.BETTER_AUTH_SESSION_TOKEN_EXPIRES_IN) * 1000;
+
+	const { token } = await prisma.session.update({
+		where: { token: sessionToken },
+		data: {
+			expiresAt: new Date(Date.now() + sessionExpiresInMs),
+		},
+	});
+
+	return {
+		accessToken: newAccessToken,
+		refreshToken: newRefreshToken,
+		sessionToken: token,
+	};
+};
+
 export const AuthService = {
 	registerPatient,
 	loginUser,
 	getMe,
+	getNewToken,
 };
