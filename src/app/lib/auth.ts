@@ -75,6 +75,11 @@ export const auth = betterAuth({
 					"forget-password": "Password Reset OTP",
 				} as const;
 
+				const templates = {
+					"email-verification": "otp",
+					"forget-password": "reset-password-otp",
+				} as const;
+
 				const user = await prisma.user.findUnique({ where: { email } });
 
 				if (!user) return;
@@ -84,7 +89,7 @@ export const auth = betterAuth({
 					await sendEmail({
 						to: email,
 						subject: subjects[type],
-						templateName: "otp",
+						templateName: templates[type],
 						templateData: {
 							name: user.name,
 							otp,
