@@ -22,7 +22,7 @@ type TAuthUser = Awaited<ReturnType<typeof auth.api.signInEmail>>["user"];
 // JWT বানাতে শুধু এই field-গুলো লাগে, তাই Prisma user-ও পাঠানো যাবে
 type TTokenUser = Pick<TAuthUser, "id" | "role" | "name" | "email" | "status" | "isDeleted" | "emailVerified">;
 type TAuthSession = NonNullable<Awaited<ReturnType<typeof auth.api.getSession>>>;
-const generateAuthTokens = (user: TAuthUser) => {
+const generateAuthTokens = (user: TTokenUser) => {
 	const jwtPayload = {
 		userId: user.id,
 		role: user.role,
