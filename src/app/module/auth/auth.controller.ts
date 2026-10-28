@@ -1,6 +1,7 @@
 import AppError from "@/app/errorHelpers/AppError";
 import { catchAsync } from "@/app/shared/catchAsync";
 import { sendResponse } from "@/app/shared/sendResponse";
+import { CookieUtils } from "@/app/utils/cookie";
 import { tokenUtils } from "@/app/utils/token";
 import type { Request, Response } from "express";
 import httpStatus from "http-status";
@@ -73,8 +74,37 @@ const getMe = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
+const getNewToken = catchAsync(async (req: Request, res: Response) => {
+	const refreshToken = CookieUtils.getCookie(req, "refreshToken");
+	const sessionToken = CookieUtils.getCookie(req, "better-auth.session_token");
+
+	if (!refreshToken || !sessionToken) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Refresh token or session token is missing");
+	}
+
+	const result = await AuthService.getNewToken(refreshToken, sessionToken);
+
+	const { accessToken, refreshToken: newRefreshToken, sessionToken: newSessionToken } = result;
+
+	tokenUtils.setAccessTokenCookie(res, accessToken);
+	tokenUtils.setRefreshTokenCookie(res, newRefreshToken);
+	tokenUtils.setBetterAuthSessionCookie(res, newSessionToken);
+
+	sendResponse(res, {
+		httpStatusCode: httpStatus.OK,
+		success: true,
+		message: "New tokens generated successfully",
+		data: {
+			accessToken,
+			refreshToken: newRefreshToken,
+			sessionToken: newSessionToken,
+		},
+	});
+});
+
 export const AuthController = {
 	registerPatient,
 	loginUser,
 	getMe,
+	getNewToken,
 };
