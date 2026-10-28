@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { APIError } from "better-auth";
 import type { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
 import { ZodError } from "zod"; // ✅ value import, কারণ instanceof-এ লাগবে
@@ -26,6 +27,11 @@ export const globalErrorHandler = (err: unknown, req: Request, res: Response, ne
 		errorSources = simplifiedError.errorSources;
 		stack = err.stack;
 	} else if (err instanceof AppError) {
+		statusCode = err.statusCode;
+		message = err.message;
+		errorSources = [{ path: "", message: err.message }];
+		stack = err.stack;
+	} else if (err instanceof APIError) {
 		statusCode = err.statusCode;
 		message = err.message;
 		errorSources = [{ path: "", message: err.message }];
