@@ -129,10 +129,31 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
+const logoutUser = catchAsync(async (req: Request, res: Response) => {
+	const sessionToken = CookieUtils.getCookie(req, "better-auth.session_token");
+
+	if (!sessionToken) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Session token is missing");
+	}
+
+	const result = await AuthService.logoutUser(sessionToken);
+
+	// set করার সময়ের একই options দিয়ে তিনটা cookie মুছে ফেলা
+	tokenUtils.clearAuthCookies(res);
+
+	sendResponse(res, {
+		httpStatusCode: httpStatus.OK,
+		success: true,
+		message: "User logged out successfully",
+		data: result,
+	});
+});
+
 export const AuthController = {
 	registerPatient,
 	loginUser,
 	getMe,
 	getNewToken,
 	changePassword,
+	logoutUser,
 };
