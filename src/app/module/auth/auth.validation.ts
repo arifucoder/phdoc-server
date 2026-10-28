@@ -17,7 +17,23 @@ const verifyEmailZodSchema = z.object({
 	email: z.email("Valid email is required"),
 	otp: z.string("OTP is required").regex(/^\d{6}$/, "OTP must be 6 digits"),
 });
+
+const forgetPasswordZodSchema = z.object({
+	email: z.string("Email is required").trim().toLowerCase().pipe(z.email("Valid email is required")),
+});
+
+const resetPasswordZodSchema = z.object({
+	email: z.string("Email is required").trim().toLowerCase().pipe(z.email("Valid email is required")),
+	otp: z.string("OTP is required").regex(/^\d{6}$/, "OTP must be 6 digits"),
+	newPassword: z
+		.string("New password is required")
+		.min(8, "Password must be at least 8 characters")
+		.max(128, "Password must be at most 128 characters"),
+});
+
 export const AuthValidation = {
 	changePasswordZodSchema,
 	verifyEmailZodSchema,
+	forgetPasswordZodSchema,
+	resetPasswordZodSchema,
 };

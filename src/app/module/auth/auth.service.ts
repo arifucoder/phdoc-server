@@ -12,6 +12,7 @@ import type {
 	IChangePasswordPayload,
 	ILoginUserPayload,
 	IRegisterPatientPayload,
+	IResetPasswordPayload,
 	IVerifyEmailPayload,
 } from "./auth.interface";
 
@@ -304,6 +305,68 @@ const verifyEmail = async (payload: IVerifyEmailPayload) => {
 	};
 };
 
+const forgetPassword = async (email: string) => {
+	const user = await prisma.user.findUnique({
+		where: { email },
+	});
+
+	// ১. আগে "আছে কি নেই": না থাকা বা deleted, দুটোতেই একই message
+	if (!user || user.isDeleted || user.status === UserStatus.DELETED) {
+		throw new AppError(httpStatus.NOT_FOUND, "User not found");
+	}
+
+	// ২. তারপর account-এর অবস্থা
+	if (user.status === UserStatus.BLOCKED) {
+		throw new AppError(httpStatus.FORBIDDEN, "User is blocked");
+	}
+
+	if (!user.emailVerified) {
+		throw new AppError(httpStatus.BAD_REQUEST, "Email not verified");
+	}
+
+	// OTP তৈরি করে sendVerificationOTP-কে type: "forget-password" দিয়ে call করে
+	await auth.api.requestPasswordResetEmailOTP({
+		body: { email },
+	});
+};
+
+const resetPassword = async (payload: IResetPasswordPayload) => {
+	const { email, otp, newPassword } = payload;
+
+	const user = await prisma.user.findUnique({
+		where: { email },
+	});
+
+	if (!user || user.isDeleted || user.status === UserStatus.DELETED) {
+		throw new AppError(httpStatus.NOT_FOUND, "User not found");
+	}
+
+	if (user.status === UserStatus.BLOCKED) {
+		throw new AppError(httpStatus.FORBIDDEN, "User is blocked");
+	}
+
+	if (!user.emailVerified) {
+		throw new AppError(httpStatus.BAD_REQUEST, "Email not verified");
+	}
+
+	// ভুল/expired OTP হলে Better Auth APIError throw করে
+	// revokeSessionsOnPasswordReset: true থাকায় password update + সব session মোছা একই transaction-এ হয়
+	await auth.api.resetPasswordEmailOTP({
+		body: {
+			email,
+			otp,
+			password: newPassword,
+		},
+	});
+
+	if (user.needPasswordChange) {
+		await prisma.user.update({
+			where: { id: user.id },
+			data: { needPasswordChange: false },
+		});
+	}
+};
+
 export const AuthService = {
 	registerPatient,
 	loginUser,
@@ -313,4 +376,6 @@ export const AuthService = {
 	logoutUser,
 	logoutFromAllDevices,
 	verifyEmail,
+	forgetPassword,
+	resetPassword,
 };

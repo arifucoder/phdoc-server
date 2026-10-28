@@ -23,4 +23,7 @@ router.post("/verify-email", validateRequest(AuthValidation.verifyEmailZodSchema
 router.post("/logout", AuthController.logoutUser);
 router.post("/logout-all", checkAuth(), AuthController.logoutFromAllDevices);
 
+router.post("/forget-password", validateRequest(AuthValidation.forgetPasswordZodSchema), AuthController.forgetPassword);
+router.post("/reset-password", validateRequest(AuthValidation.resetPasswordZodSchema), AuthController.resetPassword);
+
 export const AuthRoutes = router;

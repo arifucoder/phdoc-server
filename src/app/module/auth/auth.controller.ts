@@ -5,6 +5,7 @@ import { CookieUtils } from "@/app/utils/cookie";
 import { tokenUtils } from "@/app/utils/token";
 import type { Request, Response } from "express";
 import httpStatus from "http-status";
+import type { IForgetPasswordPayload, IResetPasswordPayload } from "./auth.interface";
 import { AuthService } from "./auth.service";
 
 const registerPatient = catchAsync(async (req: Request, res: Response) => {
@@ -187,6 +188,28 @@ const verifyEmail = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
+const forgetPassword = catchAsync(async (req: Request, res: Response) => {
+	const payload: IForgetPasswordPayload = req.body;
+
+	await AuthService.forgetPassword(payload.email);
+
+	sendResponse(res, {
+		httpStatusCode: httpStatus.OK,
+		success: true,
+		message: "Password reset OTP sent to email successfully",
+	});
+});
+const resetPassword = catchAsync(async (req: Request, res: Response) => {
+	const payload: IResetPasswordPayload = req.body;
+
+	await AuthService.resetPassword(payload);
+
+	sendResponse(res, {
+		httpStatusCode: httpStatus.OK,
+		success: true,
+		message: "Password reset successfully",
+	});
+});
 export const AuthController = {
 	registerPatient,
 	loginUser,
@@ -196,4 +219,6 @@ export const AuthController = {
 	logoutUser,
 	logoutFromAllDevices,
 	verifyEmail,
+	forgetPassword,
+	resetPassword,
 };
