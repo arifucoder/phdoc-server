@@ -5,7 +5,7 @@ import { auth } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 import { jwtUtils } from "@/app/utils/jwt";
 import { tokenUtils } from "@/app/utils/token";
-import { UserStatus } from "@/generated/prisma/enums";
+import { Role, UserStatus } from "@/generated/prisma/enums";
 import httpStatus from "http-status";
 import type { JwtPayload } from "jsonwebtoken";
 import type {
@@ -21,7 +21,7 @@ type TAuthUser = Awaited<ReturnType<typeof auth.api.signInEmail>>["user"];
 
 // JWT বানাতে শুধু এই field-গুলো লাগে, তাই Prisma user-ও পাঠানো যাবে
 type TTokenUser = Pick<TAuthUser, "id" | "role" | "name" | "email" | "status" | "isDeleted" | "emailVerified">;
-
+type TAuthSession = NonNullable<Awaited<ReturnType<typeof auth.api.getSession>>>;
 const generateAuthTokens = (user: TAuthUser) => {
 	const jwtPayload = {
 		userId: user.id,
@@ -367,6 +367,25 @@ const resetPassword = async (payload: IResetPasswordPayload) => {
 	}
 };
 
+const googleLoginSuccess = async (session: TAuthSession) => {
+	const { user } = session;
+
+	// শুধু patient-এর জন্য Patient row (doctor/admin Google দিয়ে login করলে না)
+	if (user.role === Role.PATIENT) {
+		await prisma.patient.upsert({
+			where: { userId: user.id },
+			update: {},
+			create: {
+				userId: user.id,
+				name: user.name,
+				email: user.email,
+			},
+		});
+	}
+
+	return generateAuthTokens(user);
+};
+
 export const AuthService = {
 	registerPatient,
 	loginUser,
@@ -378,4 +397,5 @@ export const AuthService = {
 	verifyEmail,
 	forgetPassword,
 	resetPassword,
+	googleLoginSuccess,
 };

@@ -1,8 +1,12 @@
+import { envVars } from "@/app/config/env";
 import AppError from "@/app/errorHelpers/AppError";
+import { auth } from "@/app/lib/auth";
 import { catchAsync } from "@/app/shared/catchAsync";
 import { sendResponse } from "@/app/shared/sendResponse";
 import { CookieUtils } from "@/app/utils/cookie";
 import { tokenUtils } from "@/app/utils/token";
+import { UserStatus } from "@/generated/prisma/enums";
+import { fromNodeHeaders } from "better-auth/node";
 import type { Request, Response } from "express";
 import httpStatus from "http-status";
 import type { IForgetPasswordPayload, IResetPasswordPayload } from "./auth.interface";
@@ -210,6 +214,74 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
 		message: "Password reset successfully",
 	});
 });
+
+const DEFAULT_REDIRECT = "/dashboard";
+
+// শুধু "/profile" ধরনের path, "//evil.com" বা array না
+const getSafeRedirectPath = (value: unknown) => {
+	if (typeof value !== "string") return DEFAULT_REDIRECT;
+
+	const isValid = value.startsWith("/") && !value.startsWith("//");
+	return isValid ? value : DEFAULT_REDIRECT;
+};
+
+// GET /api/v1/auth/login/google?redirect=/profile
+const googleLogin = catchAsync((req: Request, res: Response) => {
+	const redirectPath = getSafeRedirectPath(req.query.redirect);
+
+	const callbackURL = `${envVars.BETTER_AUTH_URL}/api/v1/auth/google/success?redirect=${encodeURIComponent(redirectPath)}`;
+	const errorCallbackURL = `${envVars.BETTER_AUTH_URL}/api/v1/auth/oauth/error`;
+
+	res.render("googleRedirect", {
+		betterAuthUrl: envVars.BETTER_AUTH_URL,
+		callbackURL,
+		errorCallbackURL,
+	});
+});
+
+const googleLoginSuccess = catchAsync(async (req: Request, res: Response) => {
+	const redirectPath = getSafeRedirectPath(req.query.redirect);
+	const loginUrl = `${envVars.FRONTEND_URL}/login`;
+
+	// browser-এর পাঠানো cookie হুবহু Better Auth-কে দেওয়া (signed cookie সহ)
+	const session = await auth.api.getSession({
+		headers: fromNodeHeaders(req.headers),
+	});
+
+	if (!session) {
+		return res.redirect(`${loginUrl}?error=no_session_found`);
+	}
+
+	const { user } = session;
+
+	// blocked/deleted হলে Better Auth-এর বানানো session মুছে ফেরত পাঠানো
+	if (user.isDeleted || user.status === UserStatus.DELETED || user.status === UserStatus.BLOCKED) {
+		await auth.api.revokeSession({
+			body: { token: session.session.token },
+			headers: fromNodeHeaders(req.headers),
+		});
+		tokenUtils.clearAuthCookies(res);
+
+		const error = user.status === UserStatus.BLOCKED ? "account_blocked" : "account_deleted";
+		return res.redirect(`${loginUrl}?error=${error}`);
+	}
+
+	const { accessToken, refreshToken } = await AuthService.googleLoginSuccess(session);
+
+	tokenUtils.setAccessTokenCookie(res, accessToken);
+	tokenUtils.setRefreshTokenCookie(res, refreshToken);
+	// Better Auth-এর signed cookie ("token.signature") বদলে raw token, যাতে checkAuth DB-তে খুঁজে পায়
+	tokenUtils.setBetterAuthSessionCookie(res, session.session.token);
+
+	res.redirect(`${envVars.FRONTEND_URL}${redirectPath}`);
+});
+
+const handleOAuthError = catchAsync((req: Request, res: Response) => {
+	const error = typeof req.query.error === "string" ? req.query.error : "oauth_failed";
+
+	res.redirect(`${envVars.FRONTEND_URL}/login?error=${encodeURIComponent(error)}`);
+});
+
 export const AuthController = {
 	registerPatient,
 	loginUser,
@@ -221,4 +293,8 @@ export const AuthController = {
 	verifyEmail,
 	forgetPassword,
 	resetPassword,
+
+	googleLogin,
+	googleLoginSuccess,
+	handleOAuthError,
 };

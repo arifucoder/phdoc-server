@@ -1,13 +1,26 @@
+import { toNodeHandler } from "better-auth/node";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import type { Request, Response } from "express";
 import express from "express";
+import path from "path";
 import { envVars } from "./app/config/env";
+import { auth } from "./app/lib/auth";
 import { globalErrorHandler } from "./app/middleware/globalErrorHandler";
 import { notFound } from "./app/middleware/notFound";
 import { IndexRoutes } from "./app/routes";
-
 const app = express();
+
+// ejs page render (googleRedirect) — email.ts-এর মতো একই folder
+app.set("view engine", "ejs");
+app.set(
+	"views",
+	envVars.NODE_ENV === "production"
+		? path.join(process.cwd(), "dist/templates")
+		: path.join(process.cwd(), "src/app/templates"),
+);
+
+app.all("/api/auth/{*any}", toNodeHandler(auth));
 
 // Enable URL-encoded form data parsing
 app.use(express.urlencoded({ extended: true }));

@@ -7,7 +7,20 @@ import { sendEmail } from "../utils/email";
 import { prisma } from "./prisma";
 
 const OTP_EXPIRES_IN = 2 * 60; // seconds
+
+const isProduction = envVars.NODE_ENV === "production";
+
+const betterAuthCookieAttributes = {
+	httpOnly: true,
+	secure: isProduction,
+	sameSite: isProduction ? "none" : "lax",
+	path: "/",
+} as const;
+
 export const auth = betterAuth({
+	baseURL: envVars.BETTER_AUTH_URL,
+	secret: envVars.BETTER_AUTH_SECRET,
+	trustedOrigins: [envVars.FRONTEND_URL],
 	database: prismaAdapter(prisma, {
 		provider: "postgresql", // or "mysql", "sqlite", ...etc
 	}),
@@ -17,6 +30,31 @@ export const auth = betterAuth({
 		requireEmailVerification: true,
 		revokeSessionsOnPasswordReset: true,
 	},
+
+	socialProviders: {
+		google: {
+			clientId: envVars.GOOGLE_CLIENT_ID,
+			clientSecret: envVars.GOOGLE_CLIENT_SECRET,
+			// redirectURI না দিলে default: BETTER_AUTH_URL + "/api/auth/callback/google"
+			// শুধু নতুন user তৈরির সময় চলে (overrideUserInfoOnSignIn: false, default)
+			mapProfileToUser: (profile) => {
+				return {
+					emailVerified: profile.email_verified,
+					role: Role.PATIENT,
+					status: UserStatus.ACTIVE,
+					needPasswordChange: false,
+					isDeleted: false,
+					deletedAt: null,
+				};
+			},
+		},
+	},
+
+	advanced: {
+		useSecureCookies: false,
+		defaultCookieAttributes: betterAuthCookieAttributes,
+	},
+
 	emailVerification: {
 		sendOnSignUp: true,
 		sendOnSignIn: true,
