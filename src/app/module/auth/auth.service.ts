@@ -235,10 +235,26 @@ const changePassword = async (payload: IChangePasswordPayload, sessionToken: str
 	};
 };
 
+const logoutUser = async (sessionToken: string) => {
+	if (!sessionToken) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Session token is missing");
+	}
+
+	const headers = new Headers({
+		Authorization: `Bearer ${sessionToken}`,
+	});
+
+	// DB থেকে session মুছে দেয়, return করে { success: true }
+	const result = await auth.api.signOut({ headers });
+
+	return result;
+};
+
 export const AuthService = {
 	registerPatient,
 	loginUser,
 	getMe,
 	getNewToken,
 	changePassword,
+	logoutUser,
 };
