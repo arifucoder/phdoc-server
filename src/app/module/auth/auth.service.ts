@@ -8,7 +8,7 @@ import { tokenUtils } from "@/app/utils/token";
 import { UserStatus } from "@/generated/prisma/enums";
 import httpStatus from "http-status";
 import type { JwtPayload } from "jsonwebtoken";
-import type { ILoginUserPayload, IRegisterPatientPayload } from "./auth.interface";
+import type { IChangePasswordPayload, ILoginUserPayload, IRegisterPatientPayload } from "./auth.interface";
 
 // Better Auth-এর user থেকে access + refresh token বানানো
 type TAuthUser = Awaited<ReturnType<typeof auth.api.signInEmail>>["user"];
@@ -195,9 +195,50 @@ const getNewToken = async (refreshToken: string, sessionToken: string) => {
 	};
 };
 
+const changePassword = async (payload: IChangePasswordPayload, sessionToken: string) => {
+	const headers = new Headers({
+		Authorization: `Bearer ${sessionToken}`,
+	});
+
+	const session = await auth.api.getSession({ headers });
+
+	if (!session) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Invalid session token");
+	}
+
+	const { currentPassword, newPassword } = payload;
+
+	// ভুল currentPassword হলে Better Auth APIError throw করবে
+	// revokeOtherSessions: true → সব পুরনো session মুছে নতুন session, result.token-এ নতুন token
+	const result = await auth.api.changePassword({
+		body: {
+			currentPassword,
+			newPassword,
+			revokeOtherSessions: true,
+		},
+		headers,
+	});
+
+	if (session.user.needPasswordChange) {
+		await prisma.user.update({
+			where: { id: session.user.id },
+			data: { needPasswordChange: false },
+		});
+	}
+
+	const { accessToken, refreshToken } = generateAuthTokens(session.user);
+
+	return {
+		...result,
+		accessToken,
+		refreshToken,
+	};
+};
+
 export const AuthService = {
 	registerPatient,
 	loginUser,
 	getMe,
 	getNewToken,
+	changePassword,
 };
