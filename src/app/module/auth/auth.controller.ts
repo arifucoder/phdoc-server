@@ -102,9 +102,37 @@ const getNewToken = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
+const changePassword = catchAsync(async (req: Request, res: Response) => {
+	const sessionToken = CookieUtils.getCookie(req, "better-auth.session_token");
+
+	if (!sessionToken) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Session token is missing");
+	}
+
+	const result = await AuthService.changePassword(req.body, sessionToken);
+
+	const { accessToken, refreshToken, token } = result;
+
+	tokenUtils.setAccessTokenCookie(res, accessToken);
+	tokenUtils.setRefreshTokenCookie(res, refreshToken);
+
+	// revokeOtherSessions: true হলে নতুন session token আসে
+	if (token) {
+		tokenUtils.setBetterAuthSessionCookie(res, token);
+	}
+
+	sendResponse(res, {
+		httpStatusCode: httpStatus.OK,
+		success: true,
+		message: "Password changed successfully",
+		data: result,
+	});
+});
+
 export const AuthController = {
 	registerPatient,
 	loginUser,
 	getMe,
 	getNewToken,
+	changePassword,
 };
