@@ -169,6 +169,24 @@ const logoutFromAllDevices = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
+const verifyEmail = catchAsync(async (req: Request, res: Response) => {
+	const result = await AuthService.verifyEmail(req.body);
+
+	// autoSignInAfterVerification: true → verify হওয়ার সাথে সাথে login
+	if (result.token !== null) {
+		tokenUtils.setAccessTokenCookie(res, result.accessToken);
+		tokenUtils.setRefreshTokenCookie(res, result.refreshToken);
+		tokenUtils.setBetterAuthSessionCookie(res, result.token);
+	}
+
+	sendResponse(res, {
+		httpStatusCode: httpStatus.OK,
+		success: true,
+		message: "Email verified successfully",
+		data: result,
+	});
+});
+
 export const AuthController = {
 	registerPatient,
 	loginUser,
@@ -177,4 +195,5 @@ export const AuthController = {
 	changePassword,
 	logoutUser,
 	logoutFromAllDevices,
+	verifyEmail,
 };

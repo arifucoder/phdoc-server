@@ -8,10 +8,18 @@ import { tokenUtils } from "@/app/utils/token";
 import { UserStatus } from "@/generated/prisma/enums";
 import httpStatus from "http-status";
 import type { JwtPayload } from "jsonwebtoken";
-import type { IChangePasswordPayload, ILoginUserPayload, IRegisterPatientPayload } from "./auth.interface";
+import type {
+	IChangePasswordPayload,
+	ILoginUserPayload,
+	IRegisterPatientPayload,
+	IVerifyEmailPayload,
+} from "./auth.interface";
 
 // Better Auth-এর user থেকে access + refresh token বানানো
 type TAuthUser = Awaited<ReturnType<typeof auth.api.signInEmail>>["user"];
+
+// JWT বানাতে শুধু এই field-গুলো লাগে, তাই Prisma user-ও পাঠানো যাবে
+type TTokenUser = Pick<TAuthUser, "id" | "role" | "name" | "email" | "status" | "isDeleted" | "emailVerified">;
 
 const generateAuthTokens = (user: TAuthUser) => {
 	const jwtPayload = {
@@ -265,6 +273,37 @@ const logoutFromAllDevices = async (sessionToken: string) => {
 	return result;
 };
 
+const verifyEmail = async (payload: IVerifyEmailPayload) => {
+	const { email, otp } = payload;
+
+	// ভুল/expired OTP হলে Better Auth নিজেই APIError (400) throw করে
+	// সঠিক হলে Better Auth নিজেই DB-তে emailVerified: true করে দেয়
+	const result = await auth.api.verifyEmailOTP({
+		body: { email, otp },
+	});
+
+	// autoSignInAfterVerification বন্ধ থাকলে token আসে না
+	if (result.token === null) {
+		return { token: null, user: result.user };
+	}
+
+	// JWT-তে role/status লাগে, তাই DB থেকে পুরো user নেওয়া
+	const user = await prisma.user.findUnique({ where: { email: result.user.email } });
+
+	if (!user) {
+		throw new AppError(httpStatus.NOT_FOUND, "User not found");
+	}
+
+	const { accessToken, refreshToken } = generateAuthTokens(user);
+
+	return {
+		token: result.token,
+		accessToken,
+		refreshToken,
+		user: result.user,
+	};
+};
+
 export const AuthService = {
 	registerPatient,
 	loginUser,
@@ -273,4 +312,5 @@ export const AuthService = {
 	changePassword,
 	logoutUser,
 	logoutFromAllDevices,
+	verifyEmail,
 };

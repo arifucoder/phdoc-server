@@ -13,6 +13,11 @@ const changePasswordZodSchema = z
 		path: ["newPassword"],
 	});
 
+const verifyEmailZodSchema = z.object({
+	email: z.email("Valid email is required"),
+	otp: z.string("OTP is required").regex(/^\d{6}$/, "OTP must be 6 digits"),
+});
 export const AuthValidation = {
 	changePasswordZodSchema,
+	verifyEmailZodSchema,
 };

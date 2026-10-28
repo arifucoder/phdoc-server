@@ -18,6 +18,7 @@ router.post(
 	validateRequest(AuthValidation.changePasswordZodSchema),
 	AuthController.changePassword,
 );
+router.post("/verify-email", validateRequest(AuthValidation.verifyEmailZodSchema), AuthController.verifyEmail);
 
 router.post("/logout", AuthController.logoutUser);
 router.post("/logout-all", checkAuth(), AuthController.logoutFromAllDevices);

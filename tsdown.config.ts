@@ -9,4 +9,5 @@ export default defineConfig({
 	clean: true,
 	sourcemap: true,
 	fixedExtension: false, // output: dist/index.js (index.mjs না)
+	copy: [{ from: "src/app/templates", to: "dist/templates" }],
 });
