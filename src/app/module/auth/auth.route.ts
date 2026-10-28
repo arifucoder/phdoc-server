@@ -20,5 +20,6 @@ router.post(
 );
 
 router.post("/logout", AuthController.logoutUser);
+router.post("/logout-all", checkAuth(), AuthController.logoutFromAllDevices);
 
 export const AuthRoutes = router;

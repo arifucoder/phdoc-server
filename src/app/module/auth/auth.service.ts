@@ -250,6 +250,21 @@ const logoutUser = async (sessionToken: string) => {
 	return result;
 };
 
+const logoutFromAllDevices = async (sessionToken: string) => {
+	if (!sessionToken) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Session token is missing");
+	}
+
+	const headers = new Headers({
+		Authorization: `Bearer ${sessionToken}`,
+	});
+
+	// এই user-এর সব session DB থেকে মুছে দেয়, return করে { status: true }
+	const result = await auth.api.revokeSessions({ headers });
+
+	return result;
+};
+
 export const AuthService = {
 	registerPatient,
 	loginUser,
@@ -257,4 +272,5 @@ export const AuthService = {
 	getNewToken,
 	changePassword,
 	logoutUser,
+	logoutFromAllDevices,
 };

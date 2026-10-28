@@ -149,6 +149,26 @@ const logoutUser = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
+const logoutFromAllDevices = catchAsync(async (req: Request, res: Response) => {
+	const sessionToken = CookieUtils.getCookie(req, "better-auth.session_token");
+
+	if (!sessionToken) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Session token is missing");
+	}
+
+	const result = await AuthService.logoutFromAllDevices(sessionToken);
+
+	// এই browser-এর cookie মোছা; অন্য device-গুলোকে checkAuth নিজেই আটকাবে
+	tokenUtils.clearAuthCookies(res);
+
+	sendResponse(res, {
+		httpStatusCode: httpStatus.OK,
+		success: true,
+		message: "Logged out from all devices successfully",
+		data: result,
+	});
+});
+
 export const AuthController = {
 	registerPatient,
 	loginUser,
@@ -156,4 +176,5 @@ export const AuthController = {
 	getNewToken,
 	changePassword,
 	logoutUser,
+	logoutFromAllDevices,
 };
