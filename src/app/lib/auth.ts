@@ -1,6 +1,7 @@
 import { Role, UserStatus } from "@/generated/prisma/enums";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { bearer } from "better-auth/plugins";
 import { envVars } from "../config/env";
 import { prisma } from "./prisma";
 
@@ -53,4 +54,5 @@ export const auth = betterAuth({
 			},
 		},
 	},
+	plugins: [bearer()],
 });
