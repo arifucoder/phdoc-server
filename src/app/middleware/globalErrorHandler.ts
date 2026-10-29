@@ -2,6 +2,7 @@
 import { APIError } from "better-auth";
 import type { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
+import multer from "multer";
 import { ZodError } from "zod"; // ✅ value import, কারণ instanceof-এ লাগবে
 import { envVars } from "../config/env";
 import AppError from "../errorHelpers/AppError";
@@ -35,6 +36,11 @@ export const globalErrorHandler = (err: unknown, req: Request, res: Response, ne
 		statusCode = err.statusCode;
 		message = err.message;
 		errorSources = [{ path: "", message: err.message }];
+		stack = err.stack;
+	} else if (err instanceof multer.MulterError) {
+		statusCode = httpStatus.BAD_REQUEST;
+		message = err.code === "LIMIT_FILE_SIZE" ? "File size must be less than 5MB" : err.message;
+		errorSources = [{ path: err.field ?? "", message }];
 		stack = err.stack;
 	} else if (err instanceof Error) {
 		// production-এ internal message লুকানো হচ্ছে
