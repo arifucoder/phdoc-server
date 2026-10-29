@@ -1,13 +1,18 @@
+import { deleteFileFromCloudinary } from "@/app/config/cloudinary.config";
 import { prisma } from "@/app/lib/prisma";
 import type { Specialty } from "@/generated/prisma/client";
+import type { TCreateSpecialtyPayload } from "./specialty.validation";
 
-const createSpecialty = async (payload: Specialty): Promise<Specialty> => {
-	const specialty = await prisma.specialty.create({
-		data: payload,
-	});
-
-	return specialty;
+const createSpecialty = async (payload: TCreateSpecialtyPayload): Promise<Specialty> => {
+	try {
+		return await prisma.specialty.create({ data: payload });
+	} catch (error) {
+		// DB fail করলে (যেমন duplicate title) upload হওয়া ছবি মুছে দাও
+		if (payload.icon) await deleteFileFromCloudinary(payload.icon);
+		throw error;
+	}
 };
+
 const getAllSpecialties = async (): Promise<Specialty[]> => {
 	const specialties = await prisma.specialty.findMany();
 
