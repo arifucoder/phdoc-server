@@ -5,13 +5,14 @@ import httpStatus from "http-status";
 import { DoctorService } from "./doctor.service";
 
 const getAllDoctors = catchAsync(async (req: Request, res: Response) => {
-	const result = await DoctorService.getAllDoctors();
+	const result = await DoctorService.getAllDoctors(req.query);
 
 	sendResponse(res, {
 		httpStatusCode: httpStatus.OK,
 		success: true,
 		message: "Doctors fetched successfully",
-		data: result,
+		meta: result.meta,
+		data: result.data,
 	});
 });
 

@@ -10,6 +10,8 @@ import { globalErrorHandler } from "./app/middleware/globalErrorHandler";
 import { notFound } from "./app/middleware/notFound";
 import { IndexRoutes } from "./app/routes";
 const app = express();
+// Express 5 default "simple" parser nested query বোঝে না: appointmentFee[gte]=500 কে object বানাতে "extended" লাগবে
+app.set("query parser", "extended");
 
 // ejs page render (googleRedirect) — email.ts-এর মতো একই folder
 app.set("view engine", "ejs");
