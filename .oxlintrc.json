@@ -15,6 +15,7 @@
 	"rules": {
 		"no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
 		"no-console": ["warn", { "allow": ["warn", "error"] }],
+		"no-underscore-dangle": ["warn", { "allow": ["_count", "_sum", "_avg", "_min", "_max"] }],
 		"typescript/no-floating-promises": "error",
 		"typescript/consistent-type-imports": "error",
 		"import/no-unassigned-import": ["warn", { "allow": ["dotenv/config"] }]
