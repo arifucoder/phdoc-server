@@ -94,16 +94,19 @@ export class QueryBuilder<T, TWhere = AnyObject, TInclude = AnyObject> {
 	}
 
 	// ?sortBy=appointmentFee&sortOrder=asc
+	// ?sortBy=appointmentFee&sortOrder=asc
 	sort(): this {
-		const { sortableFields = [], defaultSortBy = "createdAt" } = this.config;
+		const { sortableFields = [], defaultSortBy = "createdAt", tieBreakerFields = ["id"] } = this.config;
 		const requested = this.getString("sortBy");
 
 		const sortBy = requested && sortableFields.includes(requested) ? requested : defaultSortBy;
 		const sortOrder = this.getString("sortOrder")?.toLowerCase() === "asc" ? "asc" : "desc";
 
-		// id tie-breaker: একই value-ওয়ালা row page বদলালে duplicate/miss হবে না
+		// tie-breaker: একই value-ওয়ালা row page বদলালে duplicate/miss হবে না
 		this.orderBy = [toNested(sortBy, sortOrder, false)];
-		if (sortBy !== "id") this.orderBy.push({ id: sortOrder });
+		for (const field of tieBreakerFields) {
+			if (field !== sortBy) this.orderBy.push({ [field]: sortOrder });
+		}
 
 		return this;
 	}

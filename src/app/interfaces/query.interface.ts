@@ -8,6 +8,7 @@ export interface IQueryConfig {
 	selectableFields?: readonly string[];
 	enumFields?: readonly string[]; // value auto UPPERCASE
 	caseInsensitiveFields?: readonly string[]; // exact match, কিন্তু case ignore
+	tieBreakerFields?: readonly string[]; // default ["id"] — composite key model-এ বদলাও
 	defaultSortBy?: string;
 	defaultLimit?: number;
 	maxLimit?: number;
