@@ -8,7 +8,9 @@ import { envVars } from "./app/config/env";
 import { auth } from "./app/lib/auth";
 import { globalErrorHandler } from "./app/middleware/globalErrorHandler";
 import { notFound } from "./app/middleware/notFound";
+import { PaymentController } from "./app/module/payment/payment.controller";
 import { IndexRoutes } from "./app/routes";
+
 const app = express();
 // Express 5 default "simple" parser nested query বোঝে না: appointmentFee[gte]=500 কে object বানাতে "extended" লাগবে
 app.set("query parser", "extended");
@@ -23,6 +25,9 @@ app.set(
 );
 
 app.all("/api/auth/{*any}", toNodeHandler(auth));
+
+// stripe webhook
+app.post("/webhook", express.raw({ type: "application/json" }), PaymentController.handleStripeWebhookEvent);
 
 // Enable URL-encoded form data parsing
 app.use(express.urlencoded({ extended: true }));
