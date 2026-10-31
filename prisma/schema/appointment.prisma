@@ -1,6 +1,6 @@
 model Appointment {
   id             String            @id @default(uuid(7))
-  videoCallingId String            @unique
+  videoCallingId String            @unique @db.Uuid()
   status         AppointmentStatus @default(SCHEDULED)
   paymentStatus  PaymentStatus     @default(UNPAID)
   createdAt      DateTime          @default(now())
@@ -15,14 +15,11 @@ model Appointment {
   scheduleId String
   schedule   Schedule @relation(fields: [scheduleId], references: [id], onDelete: Restrict)
 
-  // prescription Prescription?
-  // review       Review?
-  // payment      Payment?
   review       Review?
   prescription Prescription?
   payment      Payment?
 
-  @@unique([doctorId, scheduleId])
+  @@index([doctorId], name: "idx_appointment_doctorId")
   @@index([patientId], name: "idx_appointment_patientId")
   @@index([scheduleId], name: "idx_appointment_scheduleId")
   @@index([status], name: "idx_appointment_status")
