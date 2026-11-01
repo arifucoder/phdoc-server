@@ -8,13 +8,17 @@ import { envVars } from "../config/env";
 import AppError from "../errorHelpers/AppError";
 import { handleZodError } from "../errorHelpers/handleZodError";
 import type { TErrorResponse, TErrorSources } from "../interfaces/error.interface";
+import { deleteUploadedFiles } from "../utils/deleteUploadedFiles";
 
-export const globalErrorHandler = (err: unknown, req: Request, res: Response, next: NextFunction) => {
+export const globalErrorHandler = async (err: unknown, req: Request, res: Response, next: NextFunction) => {
 	const isDev = envVars.NODE_ENV === "development";
 
 	if (isDev) {
 		console.log("Error from Global Error Handler", err);
 	}
+
+	// error হলে এই request-এ upload হওয়া file আর রাখার দরকার নেই
+	await deleteUploadedFiles(req);
 
 	let statusCode: number = httpStatus.INTERNAL_SERVER_ERROR;
 	let message = "Internal Server Error";
@@ -39,7 +43,7 @@ export const globalErrorHandler = (err: unknown, req: Request, res: Response, ne
 		stack = err.stack;
 	} else if (err instanceof multer.MulterError) {
 		statusCode = httpStatus.BAD_REQUEST;
-		message = err.code === "LIMIT_FILE_SIZE" ? "File size must be less than 5MB" : err.message;
+		message = err.code === "LIMIT_FILE_SIZE" ? "File size must be less than 2MB" : err.message;
 		errorSources = [{ path: err.field ?? "", message }];
 		stack = err.stack;
 	} else if (err instanceof Error) {
