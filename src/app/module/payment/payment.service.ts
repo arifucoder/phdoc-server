@@ -1,7 +1,11 @@
+import { deleteFileFromCloudinary, uploadFileToCloudinary } from "@/app/config/cloudinary.config";
 import { stripe } from "@/app/config/stripe.config";
 import { prisma } from "@/app/lib/prisma";
+import { sendEmail } from "@/app/utils/email";
+import { formatDateTime } from "@/app/utils/pdf";
 import { AppointmentStatus, PaymentStatus } from "@/generated/prisma/enums";
 import type { Stripe } from "stripe";
+import { formatAmount, generateInvoicePdf, type IInvoicePdfData } from "./payment.utils";
 
 const getPaymentIntentId = (session: Stripe.Checkout.Session) => {
 	if (!session.payment_intent) return null;
@@ -22,6 +26,44 @@ const refundCheckoutSession = async (session: Stripe.Checkout.Session, eventId: 
 	return true;
 };
 
+// PDF → upload → invoiceUrl save → email
+// payment ততক্ষণে PAID হয়ে গেছে, তাই এখানে কিছু fail করলেও payment-এর ক্ষতি নেই
+const processInvoice = async (data: IInvoicePdfData) => {
+	const pdfBuffer = await generateInvoicePdf(data);
+	const fileName = `invoice-${data.invoiceId}.pdf`;
+	const { secure_url: invoiceUrl } = await uploadFileToCloudinary(pdfBuffer, fileName);
+
+	try {
+		await prisma.payment.update({
+			where: { id: data.invoiceId },
+			data: { invoiceUrl },
+		});
+	} catch (error) {
+		// DB-তে save না হলে file রেখে লাভ নেই
+		await deleteFileFromCloudinary(invoiceUrl).catch((deleteError: unknown) => {
+			console.error("Failed to delete orphan invoice:", deleteError);
+		});
+		throw error;
+	}
+
+	await sendEmail({
+		to: data.patientEmail,
+		subject: `Payment Confirmation & Invoice - Appointment with Dr. ${data.doctorName}`,
+		templateName: "invoice",
+		templateData: {
+			patientName: data.patientName,
+			doctorName: data.doctorName,
+			invoiceId: data.invoiceId,
+			transactionId: data.transactionId,
+			paymentDate: formatDateTime(data.paymentDate),
+			appointmentDate: formatDateTime(data.appointmentDate),
+			amount: formatAmount(data.amount, data.currency),
+			invoiceUrl,
+		},
+		attachments: [{ filename: fileName, content: pdfBuffer, contentType: "application/pdf" }],
+	});
+};
+
 const handleCheckoutSessionCompleted = async (session: Stripe.Checkout.Session, eventId: string) => {
 	const appointmentId = session.metadata?.appointmentId;
 	const paymentId = session.metadata?.paymentId;
@@ -33,7 +75,12 @@ const handleCheckoutSessionCompleted = async (session: Stripe.Checkout.Session, 
 
 	const appointment = await prisma.appointment.findUnique({
 		where: { id: appointmentId },
-		include: { payment: true },
+		include: {
+			payment: true,
+			patient: { select: { name: true, email: true } },
+			doctor: { select: { name: true } },
+			schedule: { select: { startDateTime: true } },
+		},
 	});
 
 	if (!appointment) {
@@ -41,12 +88,15 @@ const handleCheckoutSessionCompleted = async (session: Stripe.Checkout.Session, 
 		return { message: `Appointment ${appointmentId} not found` };
 	}
 
+	// আলাদা const-এ রাখলাম, যাতে নিচের check-এর পরে TypeScript বোঝে payment আর null না
+	const payment = appointment.payment;
+
 	// Cancel হয়ে গেছে (cron payment delete করে দিয়েছে), অথবা আগেই paid (দুই tab-এ দুইবার pay)
 	const isInvalidPayment =
 		appointment.status === AppointmentStatus.CANCELED ||
-		!appointment.payment ||
-		appointment.payment.id !== paymentId ||
-		appointment.payment.status === PaymentStatus.PAID;
+		!payment ||
+		payment.id !== paymentId ||
+		payment.status === PaymentStatus.PAID;
 
 	if (isInvalidPayment) {
 		const refunded = await refundCheckoutSession(session, eventId);
@@ -78,6 +128,24 @@ const handleCheckoutSessionCompleted = async (session: Stripe.Checkout.Session, 
 			},
 		}),
 	]);
+
+	// টাকা সত্যিই কাটা গেলে invoice। await করছি না, যাতে Stripe সাথে সাথে 200 পায়।
+	// stripeEventId আগেই save হয়েছে → Stripe retry করলেও invoice দুইবার হবে না।
+	if (paymentStatus === PaymentStatus.PAID) {
+		processInvoice({
+			invoiceId: payment.id,
+			transactionId: payment.transactionId,
+			paymentDate: new Date(),
+			patientName: appointment.patient.name,
+			patientEmail: appointment.patient.email,
+			doctorName: appointment.doctor.name,
+			appointmentDate: appointment.schedule.startDateTime,
+			amount: payment.amount,
+			currency: session.currency ?? "bdt",
+		}).catch((error: unknown) => {
+			console.error(`Failed to process invoice for payment ${payment.id}:`, error);
+		});
+	}
 
 	return { message: `Payment ${paymentStatus} for appointment ${appointmentId}` };
 };

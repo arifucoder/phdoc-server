@@ -24,7 +24,7 @@ const templateDir =
 		: path.join(process.cwd(), "src/app/templates");
 
 // নতুন .ejs template বানালে তার নাম এখানে যোগ করবে
-type EmailTemplate = "otp" | "reset-password-otp";
+type EmailTemplate = "otp" | "reset-password-otp" | "prescription" | "invoice";
 
 interface SendEmailOptions {
 	to: string;
