@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	</head>
+	<body style="margin: 0; padding: 20px; background: #f5f5f5; font-family: Arial, sans-serif; color: #222">
+		<div style="max-width: 600px; margin: 0 auto; background: #fff; padding: 32px; border-radius: 8px">
+			<h1 style="margin: 0 0 4px; color: #0b5ed7; text-align: center">📋 Prescription</h1>
+			<p style="margin: 0 0 24px; color: #666; text-align: center; font-size: 14px">
+				PH Doc - Your Health, Our Priority
+			</p>
+
+			<p>Dear <strong><%= patientName %></strong>,</p>
+			<p>Dr. <%= doctorName %> has issued a prescription for you. Details are below.</p>
+
+			<table style="width: 100%; margin: 20px 0; font-size: 14px; border-collapse: collapse">
+				<tr><td style="padding: 6px 0; color: #666">Doctor</td><td>Dr. <%= doctorName %></td></tr>
+				<tr><td style="padding: 6px 0; color: #666">Specialization</td><td><%= specialization %></td></tr>
+				<tr><td style="padding: 6px 0; color: #666">Prescription ID</td><td><%= prescriptionId %></td></tr>
+				<tr><td style="padding: 6px 0; color: #666">Appointment</td><td><%= appointmentDate %></td></tr>
+				<tr><td style="padding: 6px 0; color: #666">Issued</td><td><%= issuedDate %></td></tr>
+				<% if (followUpDate) { %>
+				<tr><td style="padding: 6px 0; color: #666">Follow-up</td><td><strong><%= followUpDate %></strong></td></tr>
+				<% } %>
+			</table>
+
+			<div style="background: #e8f4f8; border-left: 4px solid #17a2b8; padding: 16px; border-radius: 4px">
+				<p style="margin: 0 0 8px; font-weight: bold; color: #17a2b8">💊 Instructions & Medications</p>
+				<div style="white-space: pre-wrap; font-size: 14px; line-height: 1.7"><%= instructions %></div>
+			</div>
+
+			<p style="text-align: center; margin: 28px 0 8px">
+				<a
+					href="<%= pdfUrl %>"
+					style="background: #0b5ed7; color: #fff; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: bold"
+					>Download PDF</a
+				>
+			</p>
+			<p style="text-align: center; font-size: 12px; color: #888">The PDF is also attached to this email.</p>
+
+			<hr style="border: none; border-top: 1px solid #ddd; margin: 24px 0" />
+			<p style="font-size: 12px; color: #888; text-align: center">
+				This is an automated email from PH Doc. Please do not reply.
+			</p>
+		</div>
+	</body>
+</html>
