@@ -4,12 +4,13 @@ model Payment {
   transactionId      String        @unique @db.Uuid()
   stripeEventId      String?       @unique
   status             PaymentStatus @default(UNPAID)
+  invoiceUrl         String?
   paymentGatewayData Json?
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
   appointmentId String      @unique
-  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@index([status], name: "idx_payment_status")
   @@map("payments")
