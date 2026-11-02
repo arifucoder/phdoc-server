@@ -7,6 +7,21 @@ import { AdminValidation } from "./admin.validation";
 
 const router = Router();
 
+// ⚠️ নির্দিষ্ট path আগে, "/:id" পরে — না হলে "/:id" এগুলোকে গিলে ফেলবে
+router.patch(
+	"/change-user-status",
+	checkAuth(Role.SUPER_ADMIN, Role.ADMIN),
+	validateRequest(AdminValidation.changeUserStatusValidationSchema),
+	AdminController.changeUserStatus,
+);
+
+router.patch(
+	"/change-user-role",
+	checkAuth(Role.SUPER_ADMIN),
+	validateRequest(AdminValidation.changeUserRoleValidationSchema),
+	AdminController.changeUserRole,
+);
+
 router.get("/", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), AdminController.getAllAdmins);
 
 router.get("/:id", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), AdminController.getAdminById);
