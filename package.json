@@ -37,7 +37,6 @@
 		"@types/node": "^26.6.5",
 		"@types/pdfkit": "^0.17.7",
 		"@types/pg": "^8.23.1",
-		"i": "^0.3.7",
 		"oxlint": "^1.89.0",
 		"oxlint-tsgolint": "^7.0.2005",
 		"prisma": "^7.10.1",
