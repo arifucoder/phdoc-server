@@ -63,9 +63,41 @@ const deleteAdmin = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
+const changeUserStatus = catchAsync(async (req: Request, res: Response) => {
+	if (!req.user) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized access! Please log in.");
+	}
+
+	const result = await AdminService.changeUserStatus(req.user, req.body);
+
+	sendResponse(res, {
+		httpStatusCode: httpStatus.OK,
+		success: true,
+		message: "User status changed successfully",
+		data: result,
+	});
+});
+
+const changeUserRole = catchAsync(async (req: Request, res: Response) => {
+	if (!req.user) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized access! Please log in.");
+	}
+
+	const result = await AdminService.changeUserRole(req.user, req.body);
+
+	sendResponse(res, {
+		httpStatusCode: httpStatus.OK,
+		success: true,
+		message: "User role changed successfully",
+		data: result,
+	});
+});
+
 export const AdminController = {
 	getAllAdmins,
 	getAdminById,
 	updateAdmin,
 	deleteAdmin,
+	changeUserStatus,
+	changeUserRole,
 };
