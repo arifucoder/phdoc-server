@@ -6,9 +6,11 @@ import { prisma } from "./app/lib/prisma";
 import { AppointmentService } from "./app/module/appointment/appointment.service";
 import { seedSuperAdmin } from "./app/utils/seed";
 
+const PORT = Number(envVars.PORT);
+const SHUTDOWN_TIMEOUT_MS = 10_000;
+
 let server: Server | undefined;
 let isShuttingDown = false;
-const PORT = envVars.PORT;
 
 const startCronJobs = () => {
 	// প্রতি ৫ মিনিটে: ৩০ মিনিটের পুরনো unpaid appointment cancel করে slot ফাঁকা করা
@@ -39,20 +41,34 @@ const gracefulShutdown = async (reason: string, exitCode: number) => {
 
 	console.warn(`${reason}. Shutting down server...`);
 
-	// কোনো কারণে আটকে গেলে ১০ সেকেন্ড পর জোর করে বন্ধ
-	setTimeout(() => process.exit(exitCode), 10_000).unref();
+	// কোনো কারণে আটকে গেলে জোর করে বন্ধ
+	setTimeout(() => {
+		console.error("Graceful shutdown timed out. Forcing exit.");
+		process.exit(exitCode);
+	}, SHUTDOWN_TIMEOUT_MS).unref();
 
-	await shutdownCron();
+	let finalExitCode = exitCode;
 
-	const runningServer = server;
-	if (runningServer) {
-		// নতুন request নেওয়া বন্ধ, চলমান request শেষ হওয়া পর্যন্ত অপেক্ষা
-		await new Promise<void>((resolve) => runningServer.close(() => resolve()));
+	try {
+		await shutdownCron();
+
+		const runningServer = server;
+		// listen fail করলে server চালুই হয়নি, close করার কিছু নেই
+		if (runningServer?.listening) {
+			// নতুন request নেওয়া বন্ধ, চলমান request শেষ হওয়া পর্যন্ত অপেক্ষা
+			await new Promise<void>((resolve, reject) => {
+				runningServer.close((error) => (error ? reject(error) : resolve()));
+			});
+		}
+
+		await prisma.$disconnect();
+		console.log("Server closed gracefully.");
+	} catch (error) {
+		console.error("Error during shutdown:", error);
+		finalExitCode = 1;
+	} finally {
+		process.exit(finalExitCode);
 	}
-
-	await prisma.$disconnect();
-
-	process.exit(exitCode);
 };
 
 const startServer = async () => {
@@ -64,15 +80,16 @@ const startServer = async () => {
 		return;
 	}
 
-	server = app.listen(PORT, () => {
-		console.log(`Server is running on port http://localhost:${PORT}`);
-		startCronJobs();
-	});
+	// Express 5: listen fail করলে (যেমন EADDRINUSE) এই callback-টাই error সহ ডাকা হয়
+	server = app.listen(PORT, (error) => {
+		if (error) {
+			console.error("Failed to start server:", error);
+			void gracefulShutdown("Server failed to start", 1);
+			return;
+		}
 
-	// যেমন port আগে থেকেই ব্যবহার হচ্ছে (EADDRINUSE)
-	server.on("error", (error) => {
-		console.error("Failed to start server:", error);
-		void gracefulShutdown("Server error", 1);
+		console.log(`Server is running on http://localhost:${PORT}`);
+		startCronJobs();
 	});
 };
 
