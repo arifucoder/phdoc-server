@@ -30,16 +30,27 @@ const toPositiveInt = (value: unknown, fallback: number): number => {
  * "user.email"                   -> { user: { email: leaf } }                         (to-one)
  * "specialties.specialty.title"  -> { specialties: { some: { specialty: { title: leaf } } } } (to-many)
  */
+/**
+ * "name"                         -> { name: leaf }
+ * "user.email"                   -> { user: { email: leaf } }                         (to-one)
+ * "specialties.specialty.title"  -> { specialties: { some: { specialty: { title: leaf } } } } (to-many)
+ */
 const toNested = (path: string, leaf: unknown, useSome = true): AnyObject => {
 	const parts = path.split(".");
+	const lastKey = parts.at(-1) ?? path; // split সবসময় অন্তত ১টা অংশ দেয়
+	const parentKeys = parts.slice(0, -1);
 
-	return parts.reduceRight<unknown>((node, key, index) => {
-		const wrapSome = useSome && index === 0 && parts.length === 3;
-		return { [key]: wrapSome ? { some: node } : node };
-	}, leaf) as AnyObject;
+	// শুরুটাই object ({ title: leaf }), তাই accumulator সবসময় AnyObject
+	return parentKeys.reduceRight<AnyObject>(
+		(node, key, index) => {
+			const wrapSome = useSome && index === 0 && parts.length === 3;
+			return { [key]: wrapSome ? { some: node } : node };
+		},
+		{ [lastKey]: leaf },
+	);
 };
 
-export class QueryBuilder<T, TWhere = AnyObject, TInclude = AnyObject> {
+export class QueryBuilder<T, TWhere extends AnyObject = AnyObject, TInclude extends AnyObject = AnyObject> {
 	private conditions: AnyObject[] = [];
 	private orderBy: AnyObject[] = [];
 	private includeArgs: AnyObject = {};
@@ -142,7 +153,7 @@ export class QueryBuilder<T, TWhere = AnyObject, TInclude = AnyObject> {
 
 	// code থেকে fixed include
 	include(relations: TInclude): this {
-		this.includeArgs = { ...this.includeArgs, ...(relations as AnyObject) };
+		this.includeArgs = { ...this.includeArgs, ...relations };
 		return this;
 	}
 
@@ -162,7 +173,7 @@ export class QueryBuilder<T, TWhere = AnyObject, TInclude = AnyObject> {
 
 	// code থেকে fixed condition, যেমন { isDeleted: false }
 	where(condition: TWhere): this {
-		this.conditions.push(condition as AnyObject);
+		this.conditions.push(condition);
 		return this;
 	}
 
@@ -188,6 +199,9 @@ export class QueryBuilder<T, TWhere = AnyObject, TInclude = AnyObject> {
 		]);
 
 		return {
+			// QueryBuilder generic, তাই Prisma delegate unknown[] দেয়; T caller-এর দেওয়া type
+			// (runtime-এ generic check করা সম্ভব না — এটা ইচ্ছাকৃত type boundary)
+			// oxlint-disable-next-line typescript/no-unsafe-type-assertion
 			data: data as T[],
 			meta: {
 				page: this.page,

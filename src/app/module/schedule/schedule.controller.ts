@@ -1,4 +1,5 @@
 import { catchAsync } from "@/app/shared/catchAsync";
+import { getParam } from "@/app/shared/getParam";
 import { sendResponse } from "@/app/shared/sendResponse";
 import type { Request, Response } from "express";
 import httpStatus from "http-status";
@@ -28,9 +29,7 @@ const getAllSchedules = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getScheduleById = catchAsync(async (req: Request, res: Response) => {
-	const { id } = req.params;
-
-	const result = await ScheduleService.getScheduleById(id as string);
+	const result = await ScheduleService.getScheduleById(getParam(req, "id"));
 
 	sendResponse(res, {
 		httpStatusCode: httpStatus.OK,
@@ -41,9 +40,7 @@ const getScheduleById = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateSchedule = catchAsync(async (req: Request, res: Response) => {
-	const { id } = req.params;
-
-	const result = await ScheduleService.updateSchedule(id as string, req.body);
+	const result = await ScheduleService.updateSchedule(getParam(req, "id"), req.body);
 
 	sendResponse(res, {
 		httpStatusCode: httpStatus.OK,
@@ -54,9 +51,7 @@ const updateSchedule = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deleteSchedule = catchAsync(async (req: Request, res: Response) => {
-	const { id } = req.params;
-
-	await ScheduleService.deleteSchedule(id as string);
+	await ScheduleService.deleteSchedule(getParam(req, "id"));
 
 	sendResponse(res, {
 		httpStatusCode: httpStatus.OK,

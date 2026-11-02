@@ -1,6 +1,6 @@
-import PDFDocument from "pdfkit";
+import PdfKitDocument from "pdfkit";
 
-type PdfDocument = InstanceType<typeof PDFDocument>;
+type PdfDocument = InstanceType<typeof PdfKitDocument>;
 
 // server UTC-তে চললেও তারিখ বাংলাদেশের সময়ে দেখাবে
 const TIME_ZONE = "Asia/Dhaka";
@@ -34,7 +34,7 @@ export interface IPdfHelpers {
 // draw-এর ভেতরে শুধু "কী আঁকবো" লিখলেই হবে।
 export const createPdfBuffer = (title: string, draw: (helpers: IPdfHelpers) => void): Promise<Buffer> => {
 	return new Promise((resolve, reject) => {
-		const doc = new PDFDocument({ size: "A4", margin: 50, info: { Title: title, Author: "PH Doc" } });
+		const doc = new PdfKitDocument({ size: "A4", margin: 50, info: { Title: title, Author: "PH Doc" } });
 
 		const chunks: Buffer[] = [];
 		doc.on("data", (chunk: Buffer) => {

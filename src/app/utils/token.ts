@@ -1,5 +1,5 @@
 import type { CookieOptions, Response } from "express";
-import type { JwtPayload, SignOptions } from "jsonwebtoken";
+import type { JwtPayload } from "jsonwebtoken";
 import { envVars } from "../config/env";
 import { CookieUtils } from "./cookie";
 import { jwtUtils } from "./jwt";
@@ -26,13 +26,13 @@ const baseCookieOptions: CookieOptions = {
 // ---------- Token তৈরি ----------
 const getAccessToken = (payload: JwtPayload): string => {
 	return jwtUtils.createToken(payload, envVars.ACCESS_TOKEN_SECRET, {
-		expiresIn: envVars.ACCESS_TOKEN_EXPIRES_IN as SignOptions["expiresIn"],
+		expiresIn: envVars.ACCESS_TOKEN_EXPIRES_IN,
 	});
 };
 
 const getRefreshToken = (payload: JwtPayload): string => {
 	return jwtUtils.createToken(payload, envVars.REFRESH_TOKEN_SECRET, {
-		expiresIn: envVars.REFRESH_TOKEN_EXPIRES_IN as SignOptions["expiresIn"],
+		expiresIn: envVars.REFRESH_TOKEN_EXPIRES_IN,
 	});
 };
 

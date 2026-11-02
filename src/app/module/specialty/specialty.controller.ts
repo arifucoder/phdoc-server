@@ -1,4 +1,5 @@
 import { catchAsync } from "@/app/shared/catchAsync";
+import { getParam } from "@/app/shared/getParam";
 import { sendResponse } from "@/app/shared/sendResponse";
 import type { Request, Response } from "express";
 import { SpecialtyService } from "./specialty.service";
@@ -29,8 +30,7 @@ const getAllSpecialties = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deleteSpecialty = catchAsync(async (req: Request, res: Response) => {
-	const { id } = req.params;
-	const result = await SpecialtyService.deleteSpecialty(id as string);
+	const result = await SpecialtyService.deleteSpecialty(getParam(req, "id"));
 	sendResponse(res, {
 		httpStatusCode: 200,
 		success: true,

@@ -1,9 +1,10 @@
+import AppError from "@/app/errorHelpers/AppError";
+import type { IRequestUser } from "@/app/interfaces/requestUser.interface";
+import { catchAsync } from "@/app/shared/catchAsync";
+import { getParam } from "@/app/shared/getParam";
+import { sendResponse } from "@/app/shared/sendResponse";
 import type { Request, Response } from "express";
 import httpStatus from "http-status";
-import AppError from "../../errorHelpers/AppError";
-import type { IRequestUser } from "../../interfaces/requestUser.interface";
-import { catchAsync } from "../../shared/catchAsync";
-import { sendResponse } from "../../shared/sendResponse";
 import { AppointmentService } from "./appointment.service";
 
 // checkAuth সবসময় req.user set করে, কিন্তু TypeScript সেটা জানে না।
@@ -40,7 +41,7 @@ const getMyAppointments = catchAsync(async (req: Request, res: Response) => {
 });
 
 const changeAppointmentStatus = catchAsync(async (req: Request, res: Response) => {
-	const appointmentId = req.params.id as string;
+	const appointmentId = getParam(req, "id");
 	const { status } = req.body; // ✅ পুরো body না, শুধু status
 	const user = getAuthUser(req);
 
@@ -55,7 +56,7 @@ const changeAppointmentStatus = catchAsync(async (req: Request, res: Response) =
 });
 
 const getMySingleAppointment = catchAsync(async (req: Request, res: Response) => {
-	const appointmentId = req.params.id as string;
+	const appointmentId = getParam(req, "id");
 	const user = getAuthUser(req);
 
 	const appointment = await AppointmentService.getMySingleAppointment(appointmentId, user);
@@ -92,7 +93,7 @@ const bookAppointmentWithPayLater = catchAsync(async (req: Request, res: Respons
 });
 
 const initiatePayment = catchAsync(async (req: Request, res: Response) => {
-	const appointmentId = req.params.id as string;
+	const appointmentId = getParam(req, "id");
 	const user = getAuthUser(req);
 
 	const paymentInfo = await AppointmentService.initiatePayment(appointmentId, user);

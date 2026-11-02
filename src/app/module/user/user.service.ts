@@ -115,7 +115,6 @@ const createDoctor = async (payload: ICreateDoctorPayload) => {
 
 		return result;
 	} catch (error) {
-		console.log("Transaction error : ", error);
 		await prisma.user.delete({
 			where: {
 				id: userData.user.id,

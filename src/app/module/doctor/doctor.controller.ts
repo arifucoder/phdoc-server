@@ -1,4 +1,5 @@
 import { catchAsync } from "@/app/shared/catchAsync";
+import { getParam } from "@/app/shared/getParam";
 import { sendResponse } from "@/app/shared/sendResponse";
 import type { Request, Response } from "express";
 import httpStatus from "http-status";
@@ -17,9 +18,7 @@ const getAllDoctors = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getDoctorById = catchAsync(async (req: Request, res: Response) => {
-	const { id } = req.params;
-
-	const result = await DoctorService.getDoctorById(id as string);
+	const result = await DoctorService.getDoctorById(getParam(req, "id"));
 
 	sendResponse(res, {
 		httpStatusCode: httpStatus.OK,
@@ -30,9 +29,7 @@ const getDoctorById = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateDoctor = catchAsync(async (req: Request, res: Response) => {
-	const { id } = req.params;
-
-	const result = await DoctorService.updateDoctor(id as string, req.body);
+	const result = await DoctorService.updateDoctor(getParam(req, "id"), req.body);
 
 	sendResponse(res, {
 		httpStatusCode: httpStatus.OK,
@@ -43,9 +40,7 @@ const updateDoctor = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deleteDoctor = catchAsync(async (req: Request, res: Response) => {
-	const { id } = req.params;
-
-	const result = await DoctorService.deleteDoctor(id as string);
+	const result = await DoctorService.deleteDoctor(getParam(req, "id"));
 
 	sendResponse(res, {
 		httpStatusCode: httpStatus.OK,

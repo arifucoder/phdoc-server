@@ -42,6 +42,14 @@ export const cloudinaryStorage: StorageEngine = {
 		cloudinary.uploader
 			.destroy(file.filename, { resource_type: "image" })
 			.then(() => cb(null))
-			.catch((error) => cb(error as Error));
+			.catch((error: unknown) => {
+				// Cloudinary অনেক সময় plain object reject করে, Error না
+				console.error("Cloudinary delete error:", error);
+				cb(
+					error instanceof Error
+						? error
+						: new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to remove file from Cloudinary"),
+				);
+			});
 	},
 };

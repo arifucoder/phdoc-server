@@ -69,7 +69,7 @@ const getMe = catchAsync(async (req: Request, res: Response) => {
 	if (!user) {
 		throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized access! Please log in.");
 	}
-	console.log({ user });
+
 	const result = await AuthService.getMe(user);
 	sendResponse(res, {
 		httpStatusCode: httpStatus.OK,

@@ -16,7 +16,7 @@ export const globalErrorHandler = async (err: unknown, req: Request, res: Respon
 	const isDev = envVars.NODE_ENV === "development";
 
 	if (isDev) {
-		console.log("Error from Global Error Handler", err);
+		console.warn("Error from Global Error Handler", err);
 	}
 
 	// error হলে এই request-এ upload হওয়া file আর রাখার দরকার নেই

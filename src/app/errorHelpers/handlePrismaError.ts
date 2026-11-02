@@ -1,19 +1,27 @@
+import type { TGenericErrorResponse } from "@/app/interfaces/error.interface";
 import type { Prisma } from "@/generated/prisma/client";
 import httpStatus from "http-status";
-import type { TGenericErrorResponse } from "../interfaces/error.interface";
+
+// unknown value আসলেই object কিনা (null বাদে)
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null;
+
+// unknown থেকে শুধু string field-গুলো নিয়ে join; array না হলে ""
+const toFieldList = (value: unknown): string =>
+	Array.isArray(value) ? value.filter((field): field is string => typeof field === "string").join(", ") : "";
 
 // duplicate হওয়া field বের করা
 // সাধারণ Prisma → meta.target, driver adapter (adapter-pg) → meta.driverAdapterError.cause.constraint.fields
 const getConflictFields = (meta: Record<string, unknown> | undefined): string => {
-	if (Array.isArray(meta?.target)) {
-		return meta.target.join(", ");
+	const targetFields = toFieldList(meta?.target);
+	if (targetFields) return targetFields;
+
+	const adapterError = meta?.driverAdapterError;
+	if (!isRecord(adapterError) || !isRecord(adapterError.cause) || !isRecord(adapterError.cause.constraint)) {
+		return "";
 	}
 
-	const adapterError = meta?.driverAdapterError as { cause?: { constraint?: { fields?: string[] } } } | undefined;
-
-	return adapterError?.cause?.constraint?.fields?.join(", ") ?? "";
+	return toFieldList(adapterError.cause.constraint.fields);
 };
-
 // findUniqueOrThrow, update, delete ইত্যাদিতে record না পেলে, unique/foreign key ভাঙলে
 export const handlePrismaKnownError = (err: Prisma.PrismaClientKnownRequestError): TGenericErrorResponse => {
 	switch (err.code) {

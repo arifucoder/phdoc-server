@@ -1,6 +1,7 @@
 import AppError from "@/app/errorHelpers/AppError";
 import type { IRequestUser } from "@/app/interfaces/requestUser.interface";
 import { catchAsync } from "@/app/shared/catchAsync";
+import { getParam } from "@/app/shared/getParam";
 import { sendResponse } from "@/app/shared/sendResponse";
 import type { Request, Response } from "express";
 import httpStatus from "http-status";
@@ -50,8 +51,10 @@ const getAllDoctorSchedules = catchAsync(async (req: Request, res: Response) => 
 });
 
 const getDoctorScheduleById = catchAsync(async (req: Request, res: Response) => {
-	const { doctorId, scheduleId } = req.params;
-	const result = await DoctorScheduleService.getDoctorScheduleById(doctorId as string, scheduleId as string);
+	const result = await DoctorScheduleService.getDoctorScheduleById(
+		getParam(req, "doctorId"),
+		getParam(req, "scheduleId"),
+	);
 
 	sendResponse(res, {
 		success: true,
@@ -73,8 +76,7 @@ const updateMyDoctorSchedule = catchAsync(async (req: Request, res: Response) =>
 });
 
 const deleteMyDoctorSchedule = catchAsync(async (req: Request, res: Response) => {
-	const { scheduleId } = req.params;
-	await DoctorScheduleService.deleteMyDoctorSchedule(scheduleId as string, getAuthUser(req));
+	await DoctorScheduleService.deleteMyDoctorSchedule(getParam(req, "id"), getAuthUser(req));
 
 	sendResponse(res, {
 		success: true,

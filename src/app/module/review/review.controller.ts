@@ -1,6 +1,7 @@
 import AppError from "@/app/errorHelpers/AppError";
 import type { IRequestUser } from "@/app/interfaces/requestUser.interface";
 import { catchAsync } from "@/app/shared/catchAsync";
+import { getParam } from "@/app/shared/getParam";
 import { sendResponse } from "@/app/shared/sendResponse";
 import type { Request, Response } from "express";
 import httpStatus from "http-status";
@@ -51,7 +52,7 @@ const getMyReviews = catchAsync(async (req: Request, res: Response) => {
 
 const updateReview = catchAsync(async (req: Request, res: Response) => {
 	const user = getAuthUser(req);
-	const reviewId = req.params.id as string;
+	const reviewId = getParam(req, "id");
 	const result = await ReviewService.updateReview(user, reviewId, req.body);
 
 	sendResponse(res, {
@@ -64,7 +65,7 @@ const updateReview = catchAsync(async (req: Request, res: Response) => {
 
 const deleteReview = catchAsync(async (req: Request, res: Response) => {
 	const user = getAuthUser(req);
-	const reviewId = req.params.id as string;
+	const reviewId = getParam(req, "id");
 	const result = await ReviewService.deleteReview(user, reviewId);
 
 	sendResponse(res, {

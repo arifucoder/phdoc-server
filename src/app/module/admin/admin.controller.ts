@@ -1,5 +1,6 @@
 import AppError from "@/app/errorHelpers/AppError";
 import { catchAsync } from "@/app/shared/catchAsync";
+import { getParam } from "@/app/shared/getParam";
 import { sendResponse } from "@/app/shared/sendResponse";
 import type { Request, Response } from "express";
 import httpStatus from "http-status";
@@ -17,9 +18,7 @@ const getAllAdmins = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAdminById = catchAsync(async (req: Request, res: Response) => {
-	const { id } = req.params;
-
-	const result = await AdminService.getAdminById(id as string);
+	const result = await AdminService.getAdminById(getParam(req, "id"));
 
 	sendResponse(res, {
 		httpStatusCode: httpStatus.OK,
@@ -30,13 +29,11 @@ const getAdminById = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateAdmin = catchAsync(async (req: Request, res: Response) => {
-	const { id } = req.params;
-
 	if (!req.user) {
 		throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized access! Please log in.");
 	}
 
-	const result = await AdminService.updateAdmin(id as string, req.body, req.user);
+	const result = await AdminService.updateAdmin(getParam(req, "id"), req.body, req.user);
 
 	sendResponse(res, {
 		httpStatusCode: httpStatus.OK,
@@ -47,13 +44,11 @@ const updateAdmin = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deleteAdmin = catchAsync(async (req: Request, res: Response) => {
-	const { id } = req.params;
-
 	if (!req.user) {
 		throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized access! Please log in.");
 	}
 
-	const result = await AdminService.deleteAdmin(id as string, req.user);
+	const result = await AdminService.deleteAdmin(getParam(req, "id"), req.user);
 
 	sendResponse(res, {
 		httpStatusCode: httpStatus.OK,

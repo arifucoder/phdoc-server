@@ -1,6 +1,7 @@
 import AppError from "@/app/errorHelpers/AppError";
 import type { IRequestUser } from "@/app/interfaces/requestUser.interface";
 import { catchAsync } from "@/app/shared/catchAsync";
+import { getParam } from "@/app/shared/getParam";
 import { sendResponse } from "@/app/shared/sendResponse";
 import type { Request, Response } from "express";
 import httpStatus from "http-status";
@@ -51,7 +52,7 @@ const getAllPrescriptions = catchAsync(async (req: Request, res: Response) => {
 
 const getSinglePrescription = catchAsync(async (req: Request, res: Response) => {
 	const user = getAuthUser(req);
-	const prescriptionId = req.params.id as string;
+	const prescriptionId = getParam(req, "id");
 	const result = await PrescriptionService.getSinglePrescription(user, prescriptionId);
 
 	sendResponse(res, {
@@ -64,7 +65,7 @@ const getSinglePrescription = catchAsync(async (req: Request, res: Response) => 
 
 const updatePrescription = catchAsync(async (req: Request, res: Response) => {
 	const user = getAuthUser(req);
-	const prescriptionId = req.params.id as string;
+	const prescriptionId = getParam(req, "id");
 	const result = await PrescriptionService.updatePrescription(user, prescriptionId, req.body);
 
 	sendResponse(res, {
@@ -77,7 +78,7 @@ const updatePrescription = catchAsync(async (req: Request, res: Response) => {
 
 const deletePrescription = catchAsync(async (req: Request, res: Response) => {
 	const user = getAuthUser(req);
-	const prescriptionId = req.params.id as string;
+	const prescriptionId = getParam(req, "id");
 	const result = await PrescriptionService.deletePrescription(user, prescriptionId);
 
 	sendResponse(res, {

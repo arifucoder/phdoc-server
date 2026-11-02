@@ -62,7 +62,7 @@ const gracefulShutdown = async (reason: string, exitCode: number) => {
 		}
 
 		await prisma.$disconnect();
-		console.log("Server closed gracefully.");
+		console.info("Server closed gracefully.");
 	} catch (error) {
 		console.error("Error during shutdown:", error);
 		finalExitCode = 1;
@@ -88,7 +88,7 @@ const startServer = async () => {
 			return;
 		}
 
-		console.log(`Server is running on http://localhost:${PORT}`);
+		console.info(`Server is running on http://localhost:${PORT}`);
 		startCronJobs();
 	});
 };
