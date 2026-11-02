@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { Prisma } from "@/generated/prisma/client";
 import { APIError } from "better-auth";
 import type { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
@@ -6,6 +7,7 @@ import multer from "multer";
 import { ZodError } from "zod"; // ✅ value import, কারণ instanceof-এ লাগবে
 import { envVars } from "../config/env";
 import AppError from "../errorHelpers/AppError";
+import { handlePrismaKnownError, handlePrismaValidationError } from "../errorHelpers/handlePrismaError";
 import { handleZodError } from "../errorHelpers/handleZodError";
 import type { TErrorResponse, TErrorSources } from "../interfaces/error.interface";
 import { deleteUploadedFiles } from "../utils/deleteUploadedFiles";
@@ -40,6 +42,18 @@ export const globalErrorHandler = async (err: unknown, req: Request, res: Respon
 		statusCode = err.statusCode;
 		message = err.message;
 		errorSources = [{ path: "", message: err.message }];
+		stack = err.stack;
+	} else if (err instanceof Prisma.PrismaClientKnownRequestError) {
+		const simplifiedError = handlePrismaKnownError(err);
+		statusCode = simplifiedError.statusCode;
+		message = simplifiedError.message;
+		errorSources = simplifiedError.errorSources;
+		stack = err.stack;
+	} else if (err instanceof Prisma.PrismaClientValidationError) {
+		const simplifiedError = handlePrismaValidationError();
+		statusCode = simplifiedError.statusCode;
+		message = simplifiedError.message;
+		errorSources = simplifiedError.errorSources;
 		stack = err.stack;
 	} else if (err instanceof multer.MulterError) {
 		statusCode = httpStatus.BAD_REQUEST;
