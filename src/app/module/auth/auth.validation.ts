@@ -31,9 +31,15 @@ const resetPasswordZodSchema = z.object({
 		.max(128, "Password must be at most 128 characters"),
 });
 
+const loginZodSchema = z.object({
+	email: z.string("Email is required").trim().toLowerCase().pipe(z.email("Valid email is required")),
+	password: z.string("Password is required").min(1, "Password is required"),
+});
+
 export const AuthValidation = {
 	changePasswordZodSchema,
 	verifyEmailZodSchema,
 	forgetPasswordZodSchema,
 	resetPasswordZodSchema,
+	loginZodSchema,
 };
