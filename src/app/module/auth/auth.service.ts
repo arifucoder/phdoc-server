@@ -7,7 +7,6 @@ import { jwtUtils } from "@/app/utils/jwt";
 import { tokenUtils } from "@/app/utils/token";
 import { Role, UserStatus } from "@/generated/prisma/enums";
 import httpStatus from "http-status";
-import type { JwtPayload } from "jsonwebtoken";
 import type {
 	IChangePasswordPayload,
 	ILoginUserPayload,
@@ -20,7 +19,10 @@ import type {
 type TAuthUser = Awaited<ReturnType<typeof auth.api.signInEmail>>["user"];
 
 // JWT বানাতে শুধু এই field-গুলো লাগে, তাই Prisma user-ও পাঠানো যাবে
-type TTokenUser = Pick<TAuthUser, "id" | "role" | "name" | "email" | "status" | "isDeleted" | "emailVerified">;
+type TTokenUser = Pick<
+	TAuthUser,
+	"id" | "role" | "name" | "email" | "status" | "isDeleted" | "emailVerified" | "needPasswordChange"
+>;
 type TAuthSession = NonNullable<Awaited<ReturnType<typeof auth.api.getSession>>>;
 const generateAuthTokens = (user: TTokenUser) => {
 	const jwtPayload = {
@@ -31,6 +33,7 @@ const generateAuthTokens = (user: TTokenUser) => {
 		status: user.status,
 		isDeleted: user.isDeleted,
 		emailVerified: user.emailVerified,
+		needPasswordChange: user.needPasswordChange, // ✅ নতুন
 	};
 
 	return {
@@ -173,19 +176,8 @@ const getNewToken = async (refreshToken: string, sessionToken: string) => {
 		throw new AppError(httpStatus.FORBIDDEN, "User is blocked");
 	}
 
-	// ধাপ ৫: fresh data দিয়ে নতুন token
-	const jwtPayload: JwtPayload = {
-		userId: user.id,
-		role: user.role,
-		name: user.name,
-		email: user.email,
-		status: user.status,
-		isDeleted: user.isDeleted,
-		emailVerified: user.emailVerified,
-	};
-
-	const newAccessToken = tokenUtils.getAccessToken(jwtPayload);
-	const newRefreshToken = tokenUtils.getRefreshToken(jwtPayload);
+	// ধাপ ৫: fresh data দিয়ে নতুন token (payload একটাই জায়গায় বানানো হয়)
+	const { accessToken: newAccessToken, refreshToken: newRefreshToken } = generateAuthTokens(user);
 
 	// ধাপ ৬: session-এর মেয়াদ বাড়ানো (.env-এ seconds → ms)
 	const sessionExpiresInMs = Number(envVars.BETTER_AUTH_SESSION_TOKEN_EXPIRES_IN) * 1000;
@@ -235,7 +227,8 @@ const changePassword = async (payload: IChangePasswordPayload, sessionToken: str
 		});
 	}
 
-	const { accessToken, refreshToken } = generateAuthTokens(session.user);
+	// password বদলানো শেষ, তাই নতুন token-এ needPasswordChange: false
+	const { accessToken, refreshToken } = generateAuthTokens({ ...session.user, needPasswordChange: false });
 
 	return {
 		...result,
