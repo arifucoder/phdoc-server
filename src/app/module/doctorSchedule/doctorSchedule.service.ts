@@ -13,7 +13,9 @@ import {
 	doctorScheduleSortableFields,
 } from "./doctorSchedule.constant";
 import type { ICreateDoctorSchedulePayload, IUpdateDoctorSchedulePayload } from "./doctorSchedule.interface";
-
+// উপরে import
+import { addDaysToDateString, buildDateTime } from "@/app/module/schedule/schedule.utils";
+import { DoctorScheduleValidation } from "./doctorSchedule.validation";
 // ---------- helpers ----------
 
 // logged-in user-এর doctor profile (না থাকলে 404, 500 না)
@@ -187,6 +189,41 @@ const deleteMyDoctorSchedule = async (scheduleId: string, user: IRequestUser) =>
 	}
 };
 
+// ---------- public ----------
+
+// রোগী doctor-এর খালি slot দেখে: ভবিষ্যতের, booked না, ঢাকার দিন অনুযায়ী
+const getAvailableDoctorSchedules = async (doctorId: string, query: IQueryParams) => {
+	// invalid হলে ZodError → globalErrorHandler → 400
+	const { startDate, endDate } = DoctorScheduleValidation.availableScheduleQueryZodSchema.parse(query);
+
+	const doctor = await prisma.doctor.findUnique({
+		where: { id: doctorId, isDeleted: false },
+		select: { id: true },
+	});
+
+	if (!doctor) {
+		throw new AppError(httpStatus.NOT_FOUND, "Doctor not found");
+	}
+
+	const now = new Date();
+	const rangeStart = buildDateTime(startDate, "00:00");
+	const rangeEnd = buildDateTime(addDaysToDateString(endDate, 1), "00:00");
+
+	const rows = await prisma.doctorSchedules.findMany({
+		where: {
+			doctorId,
+			isBooked: false,
+			// আজকের যে slot শুরু হয়ে গেছে সেটা বাদ (book-এর সময় backend এমনিতেও আটকায়)
+			schedule: { startDateTime: { gte: rangeStart > now ? rangeStart : now, lt: rangeEnd } },
+		},
+		select: { schedule: { select: { id: true, startDateTime: true, endDateTime: true } } },
+		orderBy: { schedule: { startDateTime: "asc" } },
+	});
+
+	// রোগীর শুধু সময়টুকু লাগে
+	return rows.map((row) => row.schedule);
+};
+
 export const DoctorScheduleService = {
 	createMyDoctorSchedule,
 	getMyDoctorSchedules,
@@ -194,4 +231,5 @@ export const DoctorScheduleService = {
 	getDoctorScheduleById,
 	updateMyDoctorSchedule,
 	deleteMyDoctorSchedule,
+	getAvailableDoctorSchedules,
 };

@@ -114,7 +114,7 @@ const createCheckoutSession = async ({ appointmentId, paymentId, doctorName, amo
 		],
 		metadata: { appointmentId, paymentId },
 		success_url: `${envVars.FRONTEND_URL}/dashboard/payment/payment-success?appointment_id=${appointmentId}&payment_id=${paymentId}`,
-		cancel_url: `${envVars.FRONTEND_URL}/dashboard/appointments?error=payment_cancelled`,
+		cancel_url: `${envVars.FRONTEND_URL}/dashboard/my-appointments?error=payment_cancelled`,
 	});
 
 	if (!session.url) {

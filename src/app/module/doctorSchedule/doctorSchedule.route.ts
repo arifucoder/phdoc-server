@@ -36,5 +36,5 @@ router.delete(
 	checkAuth(Role.DOCTOR),
 	DoctorScheduleController.deleteMyDoctorSchedule,
 );
-
+router.get("/doctor/:doctorId/available", DoctorScheduleController.getAvailableDoctorSchedules);
 export const DoctorScheduleRoutes = router;

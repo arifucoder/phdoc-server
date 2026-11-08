@@ -29,7 +29,28 @@ const updateDoctorScheduleZodSchema = z
 		path: ["scheduleIds"],
 	});
 
+const dateString = z.iso.date("Date must be in YYYY-MM-DD format");
+
+// ---------- Public: doctor-এর খালি slot (date range) ----------
+const MAX_RANGE_DAYS = 31;
+
+const availableScheduleQueryZodSchema = z
+	.object({
+		startDate: dateString,
+		endDate: dateString,
+	})
+	.refine((data) => data.endDate >= data.startDate, {
+		message: "End date must be the same as or after start date",
+		path: ["endDate"],
+	})
+	// সীমা না দিলে কেউ ১০ বছরের range চেয়ে DB-কে চাপ দিতে পারে
+	.refine((data) => (Date.parse(data.endDate) - Date.parse(data.startDate)) / 86_400_000 < MAX_RANGE_DAYS, {
+		message: `Date range can be at most ${MAX_RANGE_DAYS} days`,
+		path: ["endDate"],
+	});
+
 export const DoctorScheduleValidation = {
 	createDoctorScheduleZodSchema,
 	updateDoctorScheduleZodSchema,
+	availableScheduleQueryZodSchema,
 };
