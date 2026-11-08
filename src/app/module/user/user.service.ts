@@ -15,7 +15,8 @@ const createDoctor = async (payload: ICreateDoctorPayload) => {
 		});
 		if (!specialty) {
 			// throw new Error(`Specialty with id ${specialtyId} not found`);
-			throw new Error(`Specialty with id ${specialtyId} not found`);
+			// specialty খুঁজে না পেলে
+			throw new AppError(httpStatus.NOT_FOUND, `Specialty with id ${specialtyId} not found`);
 		}
 		specialties.push(specialty);
 	}
@@ -28,7 +29,8 @@ const createDoctor = async (payload: ICreateDoctorPayload) => {
 
 	if (userExists) {
 		// throw new Error("User with this email already exists");
-		throw new Error("User with this email already exists");
+		// email আগেই থাকলে
+		throw new AppError(httpStatus.CONFLICT, "User with this email already exists");
 	}
 
 	const userData = await auth.api.signUpEmail({
