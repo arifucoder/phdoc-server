@@ -21,6 +21,7 @@ const baseCookieOptions: CookieOptions = {
 	sameSite: isProduction ? "none" : "lax",
 	// sameSite: "none",
 	path: "/",
+	...(envVars.COOKIE_DOMAIN && { domain: envVars.COOKIE_DOMAIN }),
 };
 
 // ---------- Token তৈরি ----------
