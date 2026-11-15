@@ -15,7 +15,7 @@ let isShuttingDown = false;
 const startCronJobs = () => {
 	// প্রতি ৫ মিনিটে: ৩০ মিনিটের পুরনো unpaid appointment cancel করে slot ফাঁকা করা
 	schedule(
-		"0 3 * * *",
+		"0 */6 * * *",
 		async () => {
 			try {
 				const { canceledCount } = await AppointmentService.cancelUnpaidAppointments();
